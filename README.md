@@ -56,3 +56,9 @@ Here’s how you can help:
 - **Pull Requests**: Fork the repository, create a new branch, and submit a pull request.
 Please ensure that you follow the code of conduct and include tests for new features.
 
+**Branching Strategy**:
+- main: The stable production-ready version of PlotSense.
+- dev: Development branch for ongoing features.
+- feature/<feature-name>: Branches for specific features (e.g., feature/ai-visualization-suggestions).
+- bugfix/<bug-name>: Branches for bug fixes.
+
