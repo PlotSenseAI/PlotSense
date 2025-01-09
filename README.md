@@ -1,7 +1,4 @@
 # PlotSense
-PlotSense is an AI-powered Python package that automatically suggests the best visualizations for your data. It leverages machine learning to select the most effective chart types based on dataset characteristics, providing explainable insights.
-
-# PlotSense
 
 **PlotSense** is an AI-powered Python package that provides intelligent data visualization suggestions. It helps data professionals automate the process of selecting the best visualizations based on data type, relationships, and user goals, making data exploration more efficient, insightful, and accessible.
 
