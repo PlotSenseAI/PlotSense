@@ -41,18 +41,26 @@ explanation = suggestions['best_visualization_explanation']
 print(explanation)
 
 ```
+# Branching Strategy
+- main: The stable production-ready version of PlotSense.
+- dev: Development branch for ongoing features.
+- feature/<feature-name>: Branches for specific features (e.g., feature/ai-visualization-suggestions).
+- bugfix/<bug-name>: Branches for bug fixes.
+- 
 # Contributing
 We welcome contributions from the community! If you're interested in contributing to AutoViz, please follow these steps:
 
 Fork the repository on GitHub.
-Clone your fork and create a new branch for your feature or bugfix.
-Commit your changes to the new branch, ensuring that you follow coding standards and write appropriate tests.
-Push your changes to your fork on GitHub.
-Submit a pull request to the main repository, detailing your changes and referencing any related issues.
+- Clone your fork and create a new branch (eg. feature/bug) for your feature or bugfix.
+- Commit your changes to the new branch, ensuring that you follow coding standards and write appropriate tests.
+- Push your changes to your fork on GitHub.
+- Submit a pull request to the main repository, detailing your changes and referencing any related issues.
 
 Here’s how you can help:
 - **Bug Reports**: Open an issue to report a bug.
 - **Feature Requests**: Suggest new features by opening an issue.
 - **Pull Requests**: Fork the repository, create a new branch, and submit a pull request.
 Please ensure that you follow the code of conduct and include tests for new features.
+
+
 
