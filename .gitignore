@@ -1,0 +1,2 @@
+# add virtual env to git ignore (Do not commit virtual env)
+/venv
