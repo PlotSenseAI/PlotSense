@@ -6,9 +6,7 @@
 
 - **AI-Powered Visualization Suggestions**: Automatically recommends the best visualizations based on data properties (e.g., numerical, categorical, correlations).
 - **Explainability**: Explains why a specific visualization was chosen, helping users understand the rationale behind the suggestion.
-- **Data Profiling**: Analyzes the dataset and provides key statistics, including data types, missing values, and correlations.
 - **Customization**: Allows users to customize visualizations by adjusting colors, labels, and more.
-- **Interactive Visualizations**: Leverages powerful libraries like `Plotly` for interactive charts.
 
 ## Installation
 
@@ -27,23 +25,23 @@ df = pd.read_csv('your-dataset.csv')
 # Get AI-powered visualization suggestions
 suggestions = ps.suggest_visualizations(df)
 
-# Plot the recommended visualization
-suggestions['best_visualization'].plot()
-
-# You can also provide additional user goals
-suggestions = ps.suggest_visualizations(df, goal="compare two numerical variables")
+# Create Plots
+plot1 = ps.plot(df)
+plot2 = ps.plot(df['x','y'])
 
 # Get explanation for the suggested visualization
-explanation = suggestions['best_visualization_explanation']
-print(explanation)
+explain_plot1 = ps.explain(plot1)
+explain_plot2 = ps.explain(plot2)
+
+print(explain_plot1)
 
 ```
 # Branching Strategy
 - main: The stable production-ready version of PlotSense.
 - dev: Development branch for ongoing features.
 - feature/<feature-name>: Branches for specific features (e.g., feature/ai-visualization-suggestions).
-- bugfix/<bug-name>: Branches for bug fixes.
-- 
+- release branching:
+-  
 # Contributing
 We welcome contributions from the community! If you're interested in contributing to AutoViz, please follow these steps:
 
