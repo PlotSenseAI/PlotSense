@@ -43,7 +43,7 @@ print(explain_plot1)
 - release branching:
 -  
 # Contributing
-We welcome contributions from the community! If you're interested in contributing to AutoViz, please follow these steps:
+We welcome contributions from the community! If you're interested in contributing to PlotSense, please follow these steps:
 
 Fork the repository on GitHub.
 - Clone your fork and create a new branch (eg. feature/bug) for your feature or bugfix.
