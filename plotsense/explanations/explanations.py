@@ -9,27 +9,17 @@ import matplotlib.pyplot as plt
 from typing import Union
 import warnings
 
-# Try importing optional dependencies
-#try:
-    #from openai import OpenAI
-#except ImportError:
-    #warnings.warn("OpenAI package not installed. GPT-4 will be unavailable.")
 
 class PlotExplainer:
     def __init__(self, api_keys: dict = {}):
-        """
-        Initialize explainer with optional API keys
         
-        Args:
-            api_keys: Dictionary of API keys (openai, anthropic, etc.)
-        """
         self._init_apis(api_keys)
         self.available_models = self._detect_available_models()
         
     def _init_apis(self, api_keys):
         """Initialize API clients"""
         self.clients = {
-            'groq': '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'
+            'groq': 'gsk_nQIrCmhgovxqqaZOKadMWGdyb'
             # Add other API clients here
         }
     
