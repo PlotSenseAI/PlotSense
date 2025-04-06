@@ -4,3 +4,6 @@ pandas
 numpy
 pytest
 python-dotenv
+ipykernel
+groq
+requests

@@ -1,42 +1,93 @@
-"""
-plot_explainer/__init__.py
-A package for generating AI-enhanced explanations of matplotlib/seaborn plots
-"""
-
 import base64
+import os
 from io import BytesIO
 import matplotlib.pyplot as plt
-from typing import Union
+from typing import Union, Optional, Dict, List
+from dotenv import load_dotenv
+import groq
+from groq import Groq
 import warnings
+import requests
 
 
+load_dotenv()
 class PlotExplainer:
-    def __init__(self, api_keys: dict = {}):
-        
-        self._init_apis(api_keys)
-        self.available_models = self._detect_available_models()
-        
-    def _init_apis(self, api_keys):
-        """Initialize API clients"""
-        self.clients = {
-            'groq': 'gsk_nQIrCmhgovxqqaZOKadMWGdyb'
-            # Add other API clients here
-        }
+    DEFAULT_MODELS = {
+        'groq': ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-90b-vision-preview'],
+        # Add other providers here
+    }
     
+    def __init__(self, api_keys: Optional[Dict[str, str]] = None, timeout: int = 30):
+        """
+        Initialize PlotExplainer with API keys and configuration.
+        
+        Args:
+            api_keys: Optional dictionary of API keys. If not provided,
+                     keys will be loaded from environment variables.
+            timeout: Timeout in seconds for API requests
+        """
+        # Default to empty dict if None
+        api_keys = api_keys or {}
+
+         # Set up default keys from environment variables
+        self.api_keys = {
+            'groq': os.getenv('GROQ_API_KEY')
+            # Add other services here
+        }
+        
+        self.timeout = timeout
+        self.clients = {}
+        self.available_models = []
+        
+        self.api_keys.update(api_keys)
+        
+        self._validate_keys()
+        self._initialize_clients()
+        self._detect_available_models()
+
+    def _validate_keys(self):
+    #Validate that required API keys are present
+        for service in ['groq']:  # Add other required services here
+            if not self.api_keys.get(service):
+                self.api_keys[service] = input(f"Enter {service.upper()} API key: ").strip()
+                if not self.api_keys[service]:
+                    raise ValueError(f"{service.upper()} API key is required")
+            
+    # def _validate_keys(self):
+    #     """Validate that required API keys are present"""
+    #     missing_keys = [name for name, key in self.api_keys.items() if not key]
+    #     if missing_keys:
+    #         raise ValueError(
+    #             f"Missing API keys for: {', '.join(missing_keys)}. "
+    #             "Please provide them either in the constructor or "
+    #             "through environment variables."
+    #         )
+    
+
+    def _initialize_clients(self):
+        """Initialize API clients"""
+        self.clients = {}
+        if self.api_keys.get('groq'):
+            try:
+                from groq import Groq
+                self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
+            except ImportError:
+                warnings.warn("Groq Python client not installed. pip install groq")
+        
     def _detect_available_models(self):
-        """Detect which models are available based on installed packages"""
-        available = []
-        if self.clients['groq']:
-            available.extend(['llama3-70b-8192', 'qwen-2.5-32b'])
-        # Add checks for other models
-        return available
+        """Detect which models are available based on configured clients"""
+        self.available_models = []
+        
+        for provider, client in self.clients.items():
+            if client and provider in self.DEFAULT_MODELS:
+                self.available_models.extend(self.DEFAULT_MODELS[provider])
     
     def refine_plot_explanation(
         self, 
         plot_object: Union[plt.Figure, plt.Axes],
         prompt: str = "Explain this data visualization",
         iterations: int = 2,
-        model_rotation: list = None
+        model_rotation: Optional[List[str]] = None
     ) -> str:
         """
         Generate and iteratively refine an explanation of a matplotlib/seaborn plot
@@ -44,23 +95,27 @@ class PlotExplainer:
         Args:
             plot_object: Matplotlib Figure or Axes object
             prompt: Initial explanation prompt
-            iterations: Number of refinement cycles
+            iterations: Number of refinement cycles (1-5)
             model_rotation: Optional list of models to use (default: auto-select)
             
         Returns:
             str: Refined explanation text
+            
+        Raises:
+            ValueError: If no models are available or invalid parameters provided
         """
-        # Convert plot to image
-        img_bytes = self._plot_to_bytes(plot_object)
+        if not self.available_models:
+            raise ValueError("No available models detected")
         
-        # Set up model rotation
+        if iterations < 1 or iterations > 5:
+            raise ValueError("Iterations must be between 1 and 5")
+        
+        img_bytes = self._plot_to_bytes(plot_object)
         models = model_rotation or self._select_model_rotation()
         
-        # Generate initial explanation
         explanation = self._generate_explanation(img_bytes, prompt, models[0])
         
-        # Iterative refinement
-        for i in range(iterations):
+        for i in range(iterations - 1):
             critic = models[i % len(models)]
             refiner = models[(i + 1) % len(models)]
             
@@ -89,13 +144,21 @@ class PlotExplainer:
     def _select_model_rotation(self):
         """Select models to use based on availability"""
         priority_order = [
-            'llama3-70b-8192', 'qwen-2.5-32b'
+            'meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-90b-vision-preview'
         ]
         return [m for m in priority_order if m in self.available_models]
     
+    def _query_model(self, img_bytes: bytes, prompt: str, model: str) -> str:
+        """Generic method to query different models"""
+        if model in ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-90b-vision-preview']:
+            return self._query_llama3(img_bytes, prompt)
+        # Add handlers for other models here
+        else:
+            raise ValueError(f"Unsupported model: {model}")
+        
     def _generate_explanation(self, img_bytes: bytes, prompt: str, model: str) -> str:
         """Generate initial explanation"""
-        if model == 'llama3-70b-8192':
+        if model == 'meta-llama/llama-4-scout-17b-16e-instruct':
             return self._query_llama3(img_bytes, prompt)
         # Add other model handlers here
         else:
@@ -131,28 +194,60 @@ class PlotExplainer:
         """
         return self._query_model(img_bytes, refinement_prompt, model)
     
+    # def _query_llama3(self, img_bytes: bytes, prompt: str) -> str:
+    #     """Query GPT-4 Vision with plot image"""
+    #     base64_image = base64.b64encode(img_bytes).decode('utf-8')
+    #     response = self.clients['groq'].chat.completions.create(
+    #         model="llama3-70b-8192",
+    #         messages=[
+    #             {
+    #                 "role": "user",
+    #                 "content": [
+    #                     {"type": "text", "text": prompt},
+    #                     {
+    #                         "type": "image_url",
+    #                         "image_url": {
+    #                             "url": f"data:image/png;base64,{base64_image}"
+    #                         },
+    #                     },
+    #                 ],
+    #             }
+    #         ],
+    #         max_tokens=1000,
+    #     )
+    #     return response.choices[0].message.content
+    
     def _query_llama3(self, img_bytes: bytes, prompt: str) -> str:
-        """Query GPT-4 Vision with plot image"""
+        """Query Groq's Llama3 model with plot image"""
+        # Initialize client with API key
+        client = Groq(api_key=self.api_keys['groq'])
+        
+        # Convert image to base64
         base64_image = base64.b64encode(img_bytes).decode('utf-8')
-        response = self.clients['groq'].chat.completions.create(
-            model="llama3-70b-8192",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{base64_image}"
-                            },
-                        },
-                    ],
-                }
-            ],
-            max_tokens=1000,
-        )
-        return response.choices[0].message.content
+        
+        try:
+            response = client.chat.completions.create(
+                model="meta-llama/llama-4-scout-17b-16e-instruct",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{base64_image}"
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=1000,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"Error calling Groq API: {str(e)}")
+            raise
     
     # Add similar methods for other models (Claude, Gemini, etc.)
 
