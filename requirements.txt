@@ -7,3 +7,5 @@ python-dotenv
 ipykernel
 groq
 requests
+setuptools
+jupyter
