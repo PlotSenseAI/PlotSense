@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 seaborn
 matplotlib
 pandas
@@ -7,3 +8,6 @@ python-dotenv
 ipykernel
 groq
 requests
+=======
+matplotlib>=3.8.0
+>>>>>>> aba9026 (Adding histogram plot and updating the requirement with matplotlib)
