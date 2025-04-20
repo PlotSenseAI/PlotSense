@@ -52,12 +52,12 @@ suggestions = ps.recommend_visualizations(df)
 print(suggestions)
 ```
 ### 📊 Sample Output:
-
+```bash
         plot_type	    variables	          rationale	                                        ensemble_score
 0	    bar chart	    survived, pclass	    This visualization helps us understand the sur...	    1.0
 1	    bar chart	    survived, sex	        This visualization can reveal the difference i...	    0.6
 2	    histogram	    age	                    This histogram provides a detailed view of the...	    0.5
-
+```
 
 ### 📈 2. One-Click Plot Generation
 Generate recommended charts instantly:

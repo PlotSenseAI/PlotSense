@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 import textwrap
 from groq import Groq
 import numpy as np
-from collections import defaultdict
+from builtins import input  # Add at top of your file
 
 load_dotenv()
 
