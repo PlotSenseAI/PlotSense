@@ -8,7 +8,9 @@ from concurrent.futures import ThreadPoolExecutor
 import textwrap
 from groq import Groq
 import numpy as np
+import builtins
 from builtins import input  # Add at top of your file
+from collections import defaultdict
 
 load_dotenv()
 
@@ -22,7 +24,7 @@ class VisualizationRecommender:
         # Add other providers here
     }
     
-    def __init__(self, api_keys: Optional[Dict[str, str]] = None, timeout: int = 30):
+    def __init__(self, api_keys: Optional[Dict[str, str]] = None, timeout: int = 30, interactive: bool = True):
         """
         Initialize VisualizationRecommender with API keys and configuration.
         
@@ -31,6 +33,7 @@ class VisualizationRecommender:
                      keys will be loaded from environment variables.
             timeout: Timeout in seconds for API requests
         """
+        self.interactive = interactive
         api_keys = api_keys or {}
         self.api_keys = {
             'groq': os.getenv('GROQ_API_KEY')
@@ -54,9 +57,16 @@ class VisualizationRecommender:
         """Validate that required API keys are present"""
         for service in ['groq']:
             if not self.api_keys.get(service):
-                self.api_keys[service] = input(f"Enter {service.upper()} API key: ").strip()
-                if not self.api_keys[service]:
-                    raise ValueError(f"{service.upper()} API key is required")
+                if self.interactive:
+                    try:
+                        self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
+                        if not self.api_keys[service]:
+                            raise ValueError(f"{service.upper()} API key is required")
+                    except (EOFError, OSError):
+                         # Handle cases where input is not available
+                        raise ValueError(f"{service.upper()} API key is required")
+                else:
+                    raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
 
     def _initialize_clients(self):
         """Initialize API clients"""
@@ -161,23 +171,80 @@ class VisualizationRecommender:
         
         return self._parse_recommendations(response, model)
 
+    # def _apply_ensemble_scoring(
+    #     self,
+    #     all_recommendations: Dict[str, List[Dict]],
+    #     weights: Dict[str, float]
+    # ) -> pd.DataFrame:
+    #     """
+    #     Apply weighted ensemble scoring to recommendations from all models.
+        
+    #     Args:
+    #         all_recommendations: Dictionary of {model_name: recommendations}
+    #         weights: Dictionary of {model_name: weight}
+            
+    #     Returns:
+    #         pd.DataFrame: Recommendations with ensemble scores, sorted by score
+    #     """
+    #     # Create a mapping of recommendation keys to scores
+    #     recommendation_scores = defaultdict(float)
+    #     recommendation_details = {}
+        
+    #     for model, recs in all_recommendations.items():
+    #         model_weight = weights.get(model, 0)
+    #         if model_weight <= 0:
+    #             continue
+                
+    #         for i, rec in enumerate(recs):
+    #             # Create a unique key for each recommendation
+    #             rec_key = (rec['plot_type'], rec['variables'])
+                
+    #             # Calculate position-based score (higher for earlier recommendations)
+    #             position_score = 1 / (i + 1)
+                
+    #             # Add weighted score to ensemble
+    #             recommendation_scores[rec_key] += model_weight * position_score
+                
+    #             # Store the best version of each recommendation
+    #             if rec_key not in recommendation_details or position_score > recommendation_details[rec_key]['score']:
+    #                 recommendation_details[rec_key] = {
+    #                     'plot_type': rec['plot_type'],
+    #                     'variables': rec['variables'],
+    #                     'rationale': rec.get('rationale', ''),
+    #                     'score': 0 #Initialize score
+    #                 }
+    #                 recommendation_details[rec_key]['score'] = recommendation_scores[rec_key]
+    #                    # 'contributing_models': recommendation_details.get(rec_key, {}).get('contributing_models', []) + [model]
+                
+    #     # Convert to DataFrame and sort by ensemble score
+    #     results = pd.DataFrame(recommendation_details.values())
+
+    #     if not results.empty:
+    #         # Normalize scores to 0-1 range
+    #         results['ensemble_score'] = results['score'] / results['score'].max()  # Normalize to 0-1
+    #         results = results.sort_values('ensemble_score', ascending=False)
+        
+    #     # Clean up columns
+    #     results = results[['plot_type', 'variables', 'rationale', 'ensemble_score']]
+        
+    #     return results.reset_index(drop=True)
+
     def _apply_ensemble_scoring(
         self,
         all_recommendations: Dict[str, List[Dict]],
         weights: Dict[str, float]
     ) -> pd.DataFrame:
         """
-        Apply weighted ensemble scoring to recommendations from all models.
+        Apply weighted ensemble strategy while simplifying output.
         
         Args:
             all_recommendations: Dictionary of {model_name: recommendations}
-            weights: Dictionary of {model_name: weight}
+            weights: Dictionary of {model_name: weight} 
             
         Returns:
-            pd.DataFrame: Recommendations with ensemble scores, sorted by score
+            pd.DataFrame: Weighted recommendations with ensemble_score
         """
-        # Create a mapping of recommendation keys to scores
-        recommendation_scores = defaultdict(float)
+        recommendation_weights = defaultdict(float)
         recommendation_details = {}
         
         for model, recs in all_recommendations.items():
@@ -185,35 +252,52 @@ class VisualizationRecommender:
             if model_weight <= 0:
                 continue
                 
-            for i, rec in enumerate(recs):
-                # Create a unique key for each recommendation
+            for rec in recs:
                 rec_key = (rec['plot_type'], rec['variables'])
                 
-                # Calculate position-based score (higher for earlier recommendations)
-                position_score = 1 / (i + 1)
+                # Use the model's own score
+                model_score = rec.get('score', 1.0)
+                total_weight = model_weight * model_score
                 
-                # Add weighted score to ensemble
-                recommendation_scores[rec_key] += model_weight * position_score
+                recommendation_weights[rec_key] += total_weight
                 
-                # Store the best version of each recommendation
-                if rec_key not in recommendation_details or position_score > recommendation_details[rec_key]['score']:
+                if rec_key not in recommendation_details:
                     recommendation_details[rec_key] = {
                         'plot_type': rec['plot_type'],
                         'variables': rec['variables'],
                         'rationale': rec.get('rationale', ''),
-                        'score': recommendation_scores[rec_key],
-                       # 'contributing_models': recommendation_details.get(rec_key, {}).get('contributing_models', []) + [model]
+                        'source_models': [model],
+                        'raw_weight': 0
                     }
+                else:
+                    recommendation_details[rec_key]['source_models'].append(model)
+                
+                recommendation_details[rec_key]['raw_weight'] += total_weight
         
-        # Convert to DataFrame and sort by ensemble score
-        results = pd.DataFrame(recommendation_details.values())
-        results['ensemble_score'] = results['score'] / results['score'].max()  # Normalize to 0-1
-        results = results.sort_values('ensemble_score', ascending=False)
+        # Convert to DataFrame
+        results = pd.DataFrame(list(recommendation_details.values()))
         
-        # Clean up columns
-        results = results[['plot_type', 'variables', 'rationale', 'ensemble_score']]
-        
-        return results.reset_index(drop=True)
+        if not results.empty:
+            # Normalize weights by dividing by sum of all model weights
+            total_possible = sum(weights.values())  # Normalization factor
+            results['ensemble_score'] = results['raw_weight'] / total_possible
+            results['ensemble_score'] = results['ensemble_score'].round(2)  # Round to 2 decimal places
+           # Count number of models that recommended each visualization
+            results['model_agreement'] = results['source_models'].apply(len)
+            
+            # Sort by ensemble score then by model agreement
+            results = results.sort_values(
+                ['ensemble_score', 'model_agreement'], 
+                ascending=[False, False]
+            )
+        return results[[
+            'plot_type',
+            'variables',
+            'rationale',
+            'ensemble_score',
+            'model_agreement',
+            'source_models'
+        ]].reset_index(drop=True)
 
     def _describe_dataframe(self) -> str:
         """Generate a comprehensive description of the DataFrame"""
@@ -248,7 +332,7 @@ class VisualizationRecommender:
             Recommend the most insightful and appropriate visualizations for exploring the dataset described below.
 
             For each recommendation, provide:
-            - Plot Type: <specific chart type>
+            - Plot Type: <matplotlib specific chart type> 
             - Variables: <comma-separated list of variables to visualize>
             - Rationale: <brief explanation of why this visualization is valuable>
             
@@ -314,7 +398,7 @@ _recommender_instance = None
 
 def recommend_visualizations(
     df: pd.DataFrame,
-    n: int = 3,
+    n: int = 10,
     api_keys: dict = {},
     custom_weights: Optional[Dict[str, float]] = None
 ) -> pd.DataFrame:
