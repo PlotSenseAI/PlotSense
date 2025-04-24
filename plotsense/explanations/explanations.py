@@ -4,9 +4,9 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 from typing import Union, Optional, Dict, List
 from dotenv import load_dotenv
-import groq
 from groq import Groq
 import warnings
+import builtins
 
 load_dotenv()
 class PlotExplainer:
@@ -32,6 +32,7 @@ class PlotExplainer:
             'groq': os.getenv('GROQ_API_KEY')
             # Add other services here
         }
+        self.api_keys.update(api_keys)
     
         
         self.timeout = timeout
@@ -44,30 +45,37 @@ class PlotExplainer:
         self._initialize_clients()
         self._detect_available_models()
 
+
     def _validate_keys(self):
-    #Validate that required API keys are present
-        for service in ['groq']:  # Add other required services here
+        """Validate that required API keys are present"""
+        for service in ['groq']:
             if not self.api_keys.get(service):
-                self.api_keys[service] = input(f"Enter {service.upper()} API key: ").strip()
-                if not self.api_keys[service]:
-                    raise ValueError(f"{service.upper()} API key is required")    
+                if self.interactive:
+                    try:
+                        self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
+                        if not self.api_keys[service]:
+                            raise ValueError(f"{service.upper()} API key is required")
+                    except (EOFError, OSError):
+                            # Handle cases where input is not available
+                        raise ValueError(f"{service.upper()} API key is required")
+                else:
+                    raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
 
     def _initialize_clients(self):
         """Initialize API clients"""
         self.clients = {}
         if self.api_keys.get('groq'):
             try:
-                from groq import Groq
                 self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
             except ImportError:
                 warnings.warn("Groq Python client not installed. pip install groq")
-        
+
     def _detect_available_models(self):
-        """Detect which models are available based on configured clients"""
         self.available_models = []
-        
         for provider, client in self.clients.items():
             if client and provider in self.DEFAULT_MODELS:
+                # For now we'll assume all DEFAULT_MODELS are available
+                # In a real implementation, you might want to check which models are actually available
                 self.available_models.extend(self.DEFAULT_MODELS[provider])
     
     def refine_plot_explanation(
@@ -123,9 +131,11 @@ class PlotExplainer:
             fig = plot_object.figure
         else:
             fig = plot_object
-            
+
+        # Standardize image generation
+        fig.set_size_inches(8, 6)   
         buf = BytesIO()
-        fig.savefig(buf, format='png', bbox_inches='tight')
+        fig.savefig(buf, format='png',dpi=100, bbox_inches='tight')
         buf.seek(0)
         return buf.getvalue()
     
@@ -139,18 +149,15 @@ class PlotExplainer:
     def _query_model(self, img_bytes: bytes, prompt: str, model: str) -> str:
         """Generic method to query different models"""
         if model in ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-90b-vision-preview']:
-            return self._query_llama3(img_bytes, prompt)
-        # Add handlers for other models here
+            response = self._query_llama3(img_bytes, prompt)
         else:
             raise ValueError(f"Unsupported model: {model}")
         
+        return response
+        
     def _generate_explanation(self, img_bytes: bytes, prompt: str, model: str) -> str:
         """Generate initial explanation"""
-        if model == 'meta-llama/llama-4-scout-17b-16e-instruct':
-            return self._query_llama3(img_bytes, prompt)
-        # Add other model handlers here
-        else:
-            raise ValueError(f"Unsupported model: {model}")
+        return self._query_model(img_bytes, prompt, model)
     
     def _generate_critique(self, img_bytes: bytes, explanation: str, prompt: str, model: str) -> str:
         """Generate critique of current explanation"""
@@ -165,6 +172,8 @@ class PlotExplainer:
         2. Clarity of key insights
         3. Missing important patterns
         4. Technical correctness
+
+        Be concise but thorough in your critique.
         """
         return self._query_model(img_bytes, critique_prompt, model)
     
@@ -177,8 +186,11 @@ class PlotExplainer:
         Current Explanation: {explanation}
         Critique: {critique}
         
-        Create an improved version that addresses the feedback while
-        maintaining all accurate information.
+        Create an improved version that:
+        1. Addresses all valid critique points
+        2. Maintains accurate information
+        3. Improves clarity and insightfulness
+        4. Preserves technical correctness
         """
         return self._query_model(img_bytes, refinement_prompt, model)
     
@@ -219,7 +231,7 @@ class PlotExplainer:
 # Package-level convenience function
 _explainer_instance = None
 
-def refine_plot_explanation(
+def explainer(
     plot_object: Union[plt.Figure, plt.Axes],
     prompt: str = "Explain this data visualization",
     iterations: int = 2,

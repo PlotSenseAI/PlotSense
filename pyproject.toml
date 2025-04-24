@@ -36,3 +36,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/christianchimezie/PlotSenseAI"
 Documentation = "https://github.com/christianchimezie/PlotSenseAI/blob/main/README.md"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Error processing model.*:UserWarning"
+]
