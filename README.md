@@ -22,7 +22,7 @@ pip install plotsense
 
 ```bash
 import plotsense as ps
-from plotsense import recommend_visualizations, generate_plot, refine_plot_explanation, 
+from plotsense import recommender, generate_plot, explainer, 
 ```
 ### 🔐 Authenticate with Groq API:
 Get your free API key from Groq Cloud https://console.groq.com/home
@@ -48,15 +48,28 @@ import pandas as pd
 df = pd.read_csv("data.csv")
 
 # Get AI-recommended visualizations
-suggestions = ps.recommend_visualizations(df)
+suggestions = ps.recommender(df)
 print(suggestions)
 ```
 ### 📊 Sample Output:
 ```bash
-        plot_type	    variables	          rationale	                                        ensemble_score
-0	    bar chart	    survived, pclass	    This visualization helps us understand the sur...	    1.0
-1	    bar chart	    survived, sex	        This visualization can reveal the difference i...	    0.6
-2	    histogram	    age	                    This histogram provides a detailed view of the...	    0.5
+	plot_type	variables	       rationale	                                    ensemble_score	model_agreement	    source_models
+0	hist	    age	            Shows the distribution of passenger ages, help...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+1	scatter	    age, fare	    Reveals any relationships between passenger fa...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+2	hist	    fare	        Displays the distribution of fare values, help...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+3	scatter 	age, sibsp	    Reveals any relationships between passenger ag...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+4	bar	        survived, who	Compares the survival rates across different p...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+5	scatter	    fare, parch	    Reveals any relationships between passenger fa...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+6	hist	    sibsp	        Displays the distribution of the number of sib...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+7	bar	        deck, survived	Compares the survival rates across different d...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+8	pie	        alive	        Displays the proportion of passengers who surv...	0.50	2	[llama3-70b-8192, llama-3.3-70b-versatile]
+9	bar	        pclass, survived	Compares the survival rates across different p...	0.25	1	[llama3-70b-8192]
+10	pie	        sex	Displays the proportion of male and female pas...	            0.25	1	[llama3-70b-8192]
+11	boxplot 	fare	Visualizes the distribution of fare values and...	        0.25	1	[llama3-70b-8192]
+12	line	    parch, sibsp	Shows the relationship between the number of s...	0.25	1	[llama3-70b-8192]
+13	bar	        embarked, survived	Compares the survival rates across different e...	0.25	1	[llama3-70b-8192]
+14	violinplot	fare, pclass	Visualizes the distribution of fare values acr...	0.25	1	[llama3-70b-8192]
+15	heatmap	    pclass, sex, survived	Identifies correlations between passenger clas...	0.25	1	[llama3-70b-8192]
 ```
 
 ### 📈 2. One-Click Plot Generation
@@ -77,7 +90,7 @@ plot1 = ps.generate_plot(df, suggestions[0], x='pclass', y='survived')
 Turn your visualizations into stories with natural language insights:
 
 ``` bash
-explanation = ps.refine_plot_explanation(plot1)
+explanation = ps.explainer(plot1)
 
 print(explanation)
 ```
@@ -104,9 +117,9 @@ explanation = refine_plot_explanation(fig, model_rotation=['llama-3.2-90b-vision
 
 ## 🔄 Combined Workflow: Suggest → Plot → Explain
 ``` bash
-suggestions = ps.recommend_visualizations(df)
+suggestions = ps.recommender(df)
 plot = ps.generate_plot(df, suggestions[0])
-insight = ps.refine_plot_explanation(plot)
+insight = ps.explainer(plot)
 ```
 
 ## 🤝 Contributing
