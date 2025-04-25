@@ -15,7 +15,7 @@ class PlotExplainer:
         # Add other providers here
     }
     
-    def __init__(self, api_keys: Optional[Dict[str, str]] = None, timeout: int = 30):
+    def __init__(self, api_keys: Optional[Dict[str, str]] = None,interactive: bool = True, timeout: int = 30):
         """
         Initialize PlotExplainer with API keys and configuration.
         
@@ -34,7 +34,7 @@ class PlotExplainer:
         }
         self.api_keys.update(api_keys)
     
-        
+        self.interactive = interactive
         self.timeout = timeout
         self.clients = {}
         self.available_models = []
@@ -66,9 +66,10 @@ class PlotExplainer:
         self.clients = {}
         if self.api_keys.get('groq'):
             try:
+                import groq
                 self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
             except ImportError:
-                warnings.warn("Groq Python client not installed. pip install groq")
+                warnings.warn("Groq Python client not installed. pip install groq", ImportWarning)
 
     def _detect_available_models(self):
         self.available_models = []
@@ -162,46 +163,96 @@ class PlotExplainer:
     def _generate_critique(self, img_bytes: bytes, explanation: str, prompt: str, model: str) -> str:
         """Generate critique of current explanation"""
         critique_prompt = f"""
-        Critique this plot explanation:
+        Critique this plot explanation based on the required structure:
         
         Original Prompt: {prompt}
         Current Explanation: {explanation}
+
+        Evaluate whether the explanation contains all required sections:
+        1. Overview
+        2. Key Features
+        3. Insights and Patterns
+        4. Conclusion
+            
+        For each section, provide specific feedback on:
+        - Completeness of information
+        - Accuracy of observations
+        - Clarity of presentation
+        - Depth of analysis
         
-        Provide specific feedback on:
-        1. Data interpretation accuracy
-        2. Clarity of key insights
-        3. Missing important patterns
-        4. Technical correctness
+        Also note any:
+        - Missing important patterns
+        - Technical inaccuracies
+        - Unclear statements
 
         Be concise but thorough in your critique.
+        
+        Provide your critique in a bullet-point format.
         """
         return self._query_model(img_bytes, critique_prompt, model)
     
     def _generate_refinement(self, img_bytes: bytes, explanation: str, critique: str, prompt: str, model: str) -> str:
         """Generate refined explanation"""
         refinement_prompt = f"""
-        Improve this plot explanation based on the critique:
+        Improve this plot explanation based on the critique while maintaining the required structure:
         
         Original Prompt: {prompt}
         Current Explanation: {explanation}
         Critique: {critique}
         
-        Create an improved version that:
-        1. Addresses all valid critique points
-        2. Maintains accurate information
-        3. Improves clarity and insightfulness
-        4. Preserves technical correctness
+        Create an improved version that maintains these clear sections:
+        - Overview
+        - Key Features
+        - Insights and Patterns
+        - Conclusion
+        
+        Specifically:
+        1. Address all valid critique points
+        2. Ensure each section is well-developed
+        3. Maintain accurate information
+        4. Improve clarity and insightfulness
+        5. Keep technical correctness
+        
+        Return the improved explanation with the same section headers.
         """
         return self._query_model(img_bytes, refinement_prompt, model)
     
     def _query_llama3(self, img_bytes: bytes, prompt: str) -> str:
         """Query Groq's Llama3 model with plot image"""
-        # Initialize client with API key
-        client = Groq(api_key=self.api_keys['groq'])
+        # Initialize client with API key if not already done
+        if 'groq' not in self.clients:
+            raise ValueError("Groq client not initialized")
+        
+        client = self.clients['groq']  # Use the client from initialization
         
         # Convert image to base64
         base64_image = base64.b64encode(img_bytes).decode('utf-8')
+
+        # Structured prompt template
+        structured_prompt = f"""
+        {prompt}
         
+        Please structure your response with these clear sections:
+        
+        **Overview**:
+        Provide a high-level description of what the visualization shows
+        
+        **Key Features**:
+        - Describe the main visual elements
+        - Note any important data points or ranges
+        - Highlight how variables are represented
+        
+        **Insights and Patterns**:
+        - Identify trends, clusters, or outliers
+        - Note any interesting relationships between variables
+        - Point out any surprising or notable observations
+        
+        **Conclusion**:
+        - Summarize the main takeaways
+        - Suggest any implications or next steps for analysis
+        
+        Keep the response clear, concise, and focused on the data.
+        """
         try:
             response = client.chat.completions.create(
                 model="meta-llama/llama-4-scout-17b-16e-instruct",
@@ -209,7 +260,7 @@ class PlotExplainer:
                     {
                         "role": "user",
                         "content": [
-                            {"type": "text", "text": prompt},
+                            {"type": "text", "text": structured_prompt},
                             {
                                 "type": "image_url",
                                 "image_url": {

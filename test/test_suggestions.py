@@ -155,7 +155,7 @@ class TestResponseParsing:
 
 class TestLLMIntegration:
 
-    @patch('plotsense.visual_suggestion.Visual_suggestion_v3.Groq')
+    @patch('plotsense.visual_suggestion.suggestions.Groq')
     def test_query_llm(self, mock_groq):
         """Test LLM query method"""
         # Setup
@@ -196,7 +196,7 @@ class TestLLMIntegration:
 
 class TestRecommendationGeneration:
     
-    @patch('plotsense.visual_suggestion.Visual_suggestion_v3.VisualizationRecommender._query_llm')
+    @patch('plotsense.visual_suggestion.suggestions.VisualizationRecommender._query_llm')
     def test_get_recommendations(self, mock_query, llm_dummy_response):
         """Test recommendation generation"""
         
@@ -251,7 +251,7 @@ class TestErrorHandling:
         with pytest.raises(ValueError, match="No DataFrame set"):
             r.recommend_visualizations()
     
-    @patch('plotsense.visual_suggestion.Visual_suggestion_v3.VisualizationRecommender._query_llm')
+    @patch('plotsense.visual_suggestion.suggestions.VisualizationRecommender._query_llm')
     def test_model_failure_handling(self, mock_query):
         """Test handling of model failures"""
 
