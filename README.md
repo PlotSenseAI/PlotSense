@@ -48,12 +48,18 @@ import pandas as pd
 df = pd.read_csv("data.csv")
 
 # Get AI-recommended visualizations
-suggestions = ps.recommender(df)
+suggestions = ps.recommender(df) # default number of suggestions is 5
 print(suggestions)
 ```
 ### 📊 Sample Output:
 
 ![alt text](image.png)
+
+🎛️ Want more suggestions?
+
+``` bash
+suggestions = ps.recommender(df, n=10)  
+```
 
 ### 📈 2. One-Click Plot Generation
 Generate recommended charts instantly:
