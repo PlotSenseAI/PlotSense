@@ -1,0 +1,145 @@
+Metadata-Version: 2.4
+Name: plotsense
+Version: 0.1.0
+Summary: An intelligent plotting package with suggestions and explanations
+Author-email: Christian Chimezie <chimeziechristiancc@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/christianchimezie/PlotSenseAI
+Project-URL: Documentation, https://github.com/christianchimezie/PlotSenseAI/blob/main/README.md
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: matplotlib>=3.0
+Requires-Dist: seaborn>=0.11
+Requires-Dist: pandas>=1.0
+Requires-Dist: numpy>=1.18
+
+# 🌟 PlotSense: AI-Powered Data Visualization Assistant
+
+## 📌 Overview
+
+**PlotSense** is an AI-powered assistant that helps data professionals and analysts make smarter, faster, and more explainable data visualizations. Whether you're exploring a new dataset or building dashboards, PlotSense simplifies the process with:
+
+- ✅ Smart Visualization Suggestions - Recommends the best plots based on your data structure and relationships.
+- 🧠 Natural Language Explanations – Automatically explains charts in plain English.
+- 🔗 Seamless Integration – Works out of the box with pandas, matplotlib, and seaborn.
+
+Let AI supercharge your EDA (Exploratory Data Analysis).
+
+## ⚡ Quickstart
+
+### 🔧 Install the package
+
+```bash
+pip install plotsense
+```
+
+### 🧠 Import PlotSense:
+
+```bash
+import plotsense as ps
+from plotsense import recommender, generate_plot, explainer, 
+```
+### 🔐 Authenticate with Groq API:
+Get your free API key from Groq Cloud https://console.groq.com/home
+
+```bash
+import os
+# Set GROQ_API_KEY environment variable
+os.environ['GROQ_API_KEY'] = 'your-api-key-here'
+
+#or
+
+# Set API key (one-time setup)
+ps.set_api_key("your-api-key-here")
+```
+
+## 🚀 Core Features
+### 🎯 1. AI-Recommended Visualizations
+Let PlotSense analyze your data and suggest optimal charts.
+
+```bash
+import pandas as pd
+# Load your dataset (e.g., pandas DataFrame)
+df = pd.read_csv("data.csv")
+
+# Get AI-recommended visualizations
+suggestions = ps.recommender(df) # default number of suggestions is 5
+print(suggestions)
+```
+### 📊 Sample Output:
+
+![alt text](image.png)
+
+🎛️ Want more suggestions?
+
+``` bash
+suggestions = ps.recommender(df, n=10)  
+```
+
+### 🧾 2. AI-Powered Plot Explanation
+Turn your visualizations into stories with natural language insights:
+
+``` bash
+explanation = ps.explainer(plot1)
+
+print(explanation)
+```
+
+### ⚙️ Advanced Options
+- Custom Prompts: You can provide your own prompt to guide the explanation
+
+``` bash
+explanation = refine_plot_explanation(
+    fig,
+    prompt="Explain the key trends in this sales data visualization"
+)
+```
+- Multiple Refinement Iterations: Increase the number of refinement cycles for more polished explanations:
+
+```bash  
+explanation = refine_plot_explanation(fig, iterations=3)  # Default is 2
+```
+
+## 🤝 Contributing
+We welcome contributions!
+
+### Branching Strategy
+- main → The stable production-ready version of PlotSense.
+- dev → Active development
+- feature/<feature-name> → Branches for specific features (e.g., feature/ai-visualization-suggestions).
+
+### 💡 How to Help
+- 🐞 **Bug Reports** → GitHub Issues
+- 💡 **Suggest features** → Open a discussion
+- 🚀 **Submit PRs** → Fork → Branch → Test → Pull Request
+
+### 📅 Roadmap
+- More model integrations
+- Automated insight highlighting
+- Jupyter widget support
+
+### 📥 Install or Update
+``` bash
+pip install --upgrade plotsense  # Get the latest features!
+```
+## 🛡 License
+MIT License (Open Source)
+
+## 🔐 API & Privacy Notes
+- Your API key is securely held in memory for your current Python session.
+- All requests are processed via Groq's API servers—no data is stored locally by PlotSense.
+- Requires an internet connection for model-backed features.
+
+Let your data speak—with clarity, power, and PlotSense.
+📊✨
