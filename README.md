@@ -61,21 +61,7 @@ print(suggestions)
 suggestions = ps.recommender(df, n=10)  
 ```
 
-### 📈 2. One-Click Plot Generation
-Generate recommended charts instantly:
-
-```bash
-plot1 = ps.generate_plot(df, suggestions[0]) # This will plot a bar chart with variables 'survived', 'pclass'
-plot2 = ps.generate_plot(df, suggestions[1]) # This will plot a bar chart with variables 'survived', 'sex'
-plot3 = ps.generate_plot(df, suggestions[2]) # This will plot a histogram with variable 'age'
-```
-🎛️ Want more control?
-
-``` bash
-plot1 = ps.generate_plot(df, suggestions[0], x='pclass', y='survived') 
-```
-
-### 🧾 3. AI-Powered Plot Explanation
+### 🧾 2. AI-Powered Plot Explanation
 Turn your visualizations into stories with natural language insights:
 
 ``` bash
@@ -97,13 +83,6 @@ explanation = refine_plot_explanation(
 
 ```bash  
 explanation = refine_plot_explanation(fig, iterations=3)  # Default is 2
-```
-
-## 🔄 Combined Workflow: Suggest → Plot → Explain
-``` bash
-suggestions = ps.recommender(df)
-plot = ps.generate_plot(df, suggestions[0])
-insight = ps.explainer(plot)
 ```
 
 ## 🤝 Contributing
@@ -138,8 +117,3 @@ MIT License (Open Source)
 
 Let your data speak—with clarity, power, and PlotSense.
 📊✨
-
-
-
-
-
