@@ -47,3 +47,73 @@ import pandas as pd
 # Load your dataset (e.g., pandas DataFrame)
 df = pd.read_csv("data.csv")
 
+# Get AI-recommended visualizations
+suggestions = ps.recommender(df) # default number of suggestions is 5
+print(suggestions)
+```
+### 📊 Sample Output:
+
+![alt text](suggestions_table.png)
+
+🎛️ Want more suggestions?
+
+``` bash
+suggestions = ps.recommender(df, n=10)  
+```
+
+### 🧾 2. AI-Powered Plot Explanation
+Turn your visualizations into stories with natural language insights:
+
+``` bash
+explanation = ps.explainer(plot1)
+
+print(explanation)
+```
+
+### ⚙️ Advanced Options
+- Custom Prompts: You can provide your own prompt to guide the explanation
+
+``` bash
+explanation = refine_plot_explanation(
+    fig,
+    prompt="Explain the key trends in this sales data visualization"
+)
+```
+- Multiple Refinement Iterations: Increase the number of refinement cycles for more polished explanations:
+
+```bash  
+explanation = refine_plot_explanation(fig, iterations=3)  # Default is 2
+```
+
+## 🤝 Contributing
+We welcome contributions!
+
+### Branching Strategy
+- main → The stable production-ready version of PlotSense.
+- dev → Active development
+- feature/<feature-name> → Branches for specific features (e.g., feature/ai-visualization-suggestions).
+
+### 💡 How to Help
+- 🐞 **Bug Reports** → GitHub Issues
+- 💡 **Suggest features** → Open a discussion
+- 🚀 **Submit PRs** → Fork → Branch → Test → Pull Request
+
+### 📅 Roadmap
+- More model integrations
+- Automated insight highlighting
+- Jupyter widget support
+
+### 📥 Install or Update
+``` bash
+pip install --upgrade plotsense  # Get the latest features!
+```
+## 🛡 License
+MIT License (Open Source)
+
+## 🔐 API & Privacy Notes
+- Your API key is securely held in memory for your current Python session.
+- All requests are processed via Groq's API servers—no data is stored locally by PlotSense.
+- Requires an internet connection for model-backed features.
+
+Let your data speak—with clarity, power, and PlotSense.
+📊✨
