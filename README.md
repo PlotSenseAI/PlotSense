@@ -98,11 +98,6 @@ explanation = refine_plot_explanation(
 ```bash  
 explanation = refine_plot_explanation(fig, iterations=3)  # Default is 2
 ```
-- Using Different Models: The package automatically selects the best available model, but you can specify models:
-
-``` bash
-explanation = refine_plot_explanation(fig, model_rotation=['llama-3.2-90b-vision-preview'])  # Use only this model
-``` 
 
 ## 🔄 Combined Workflow: Suggest → Plot → Explain
 ``` bash
