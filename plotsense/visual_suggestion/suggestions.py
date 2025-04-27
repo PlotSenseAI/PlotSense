@@ -130,7 +130,7 @@ class VisualizationRecommender:
             print("\nSample data:")
             print(df.head(2))
 
-    def recommend_visualizations(self, n: int = 3, custom_weights: Optional[Dict[str, float]] = None) -> pd.DataFrame:
+    def recommend_visualizations(self, n: int = 5, custom_weights: Optional[Dict[str, float]] = None) -> pd.DataFrame:
         """
         Generate visualization recommendations using weighted ensemble approach.
         
@@ -276,7 +276,7 @@ class VisualizationRecommender:
             return []
 
     def _apply_ensemble_scoring(self, all_recommendations: Dict[str, List[Dict]], weights: Dict[str, float]) -> pd.DataFrame:
-        output_columns = ['plot_type', 'variables', 'rationale', 'ensemble_score', 'model_agreement', 'source_models']
+        output_columns = ['plot_type', 'variables', 'ensemble_score', 'model_agreement', 'source_models']
         
         if self.debug:
             print("\n[DEBUG] Applying ensemble scoring with weights:")
@@ -314,7 +314,6 @@ class VisualizationRecommender:
                     recommendation_details[rec_key] = {
                         'plot_type': rec['plot_type'],
                         'variables': var_key,
-                        'rationale': rec.get('rationale', ''),
                         'source_models': [model],
                         'raw_weight': total_weight
                     }
@@ -455,9 +454,6 @@ class VisualizationRecommender:
                         # Filter variables to only those that exist in DataFrame
                         variables = [v.strip() for v in raw_vars.split(',') if v.strip() in self.df.columns]
                         rec['variables'] = ', '.join([var for var in variables if var in self.df.columns])
-            
-                    elif line.lower().startswith('rationale:'):
-                        rec['rationale'] = line.split(':', 1)[1].strip()
                 
                 if 'plot_type' in rec and 'variables' in rec and rec['variables']:
                     recommendations.append(rec)
@@ -474,7 +470,7 @@ _recommender_instance = None
 
 def recommender(
     df: pd.DataFrame,
-    n: int = 3,
+    n: int = 5,
     api_keys: dict = {},
     custom_weights: Optional[Dict[str, float]] = None,
     debug: bool = False
