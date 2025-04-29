@@ -19,10 +19,13 @@ Classifier: Programming Language :: Python :: 3.13
 Classifier: Topic :: Scientific/Engineering :: Visualization
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
+License-File: LICENCE
+License-File: NOTICE
 Requires-Dist: matplotlib>=3.0
 Requires-Dist: seaborn>=0.11
 Requires-Dist: pandas>=1.0
 Requires-Dist: numpy>=1.18
+Dynamic: license-file
 
 # 🌟 PlotSense: AI-Powered Data Visualization Assistant
 
@@ -79,7 +82,7 @@ print(suggestions)
 ```
 ### 📊 Sample Output:
 
-![alt text](image.png)
+![alt text](suggestions_table.png)
 
 🎛️ Want more suggestions?
 
