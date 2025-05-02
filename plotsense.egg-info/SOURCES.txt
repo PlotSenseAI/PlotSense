@@ -15,6 +15,3 @@ plotsense/visual_suggestion/__init__.py
 plotsense/visual_suggestion/suggestions.py
 test/test_explanations.py
 test/test_suggestions.py
-plotsense/visual_suggestion/suggestions.py
-test/test_explanations.py
-test/test_suggestions.py
