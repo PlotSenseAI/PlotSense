@@ -81,6 +81,7 @@ class PlotGenerator:
     # ========== Basic Plot Functions ==========
     def _create_scatter(self, variables: List[str], **kwargs) -> plt.Figure:
         fig, ax = plt.subplots()
+        
         ax.scatter(self.data[variables[0]], self.data[variables[1]], **kwargs)
         self._set_labels(ax, variables)
         ax.set_title(f"Scatter: {variables[0]} vs {variables[1]}")
@@ -95,22 +96,40 @@ class PlotGenerator:
     
     def _create_bar(self, variables: List[str], **kwargs) -> plt.Figure:
         fig, ax = plt.subplots()
-        
+
+        # Extract label-related kwargs if provided
+        x_label = kwargs.pop('x_label', None)
+        y_label = kwargs.pop('y_label', None)
+        title = kwargs.pop('title', None)
+            
         if len(variables) == 1:
             # Single variable - show value counts
             value_counts = self.data[variables[0]].value_counts()
             ax.bar(value_counts.index.astype(str), value_counts.values, **kwargs)
-            ax.set_xlabel(variables[0])
-            ax.set_ylabel('Count')
+            ax.set_xlabel(variables[0] if x_label is None else x_label)
+            ax.set_ylabel('Count' if y_label is None else y_label)
+            ax.set_title(f"Bar plot of {variables[0]}" if title is None else title)
+
+            # Rotate xticks if too many
+            if len(value_counts) > 10:
+                # Increase figure width and rotate xticks
+                fig.set_size_inches(max(12, len(value_counts) * 0.5), 8)
+                plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+                
         else:
             # First variable is numeric, second is categorical
             grouped = self.data.groupby(variables[1])[variables[0]].mean()
             ax.bar(grouped.index.astype(str), grouped.values, **kwargs)
-            ax.set_xlabel(variables[1])
-            ax.set_ylabel(f"Mean {variables[0]}")
+            ax.set_xlabel(variables[1] if x_label is None else x_label)
+            ax.set_ylabel(f"Mean {variables[0]}" if y_label is None else y_label)
+            ax.set_title(f"Mean {variables[0]} by {variables[1]}" if title is None else title)
+
+            # Rotate xticks if too many
+            if len(grouped) > 10:
+                # Increase figure width and rotate xticks
+                fig.set_size_inches(max(12, len(grouped) * 0.5), 8)
+                plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
             
-        ax.set_title(f"Bar plot: {variables[0]}" + 
-                    (f" by {variables[1]}" if len(variables) > 1 else ""))
         return fig
     
     def _create_barh(self, variables: List[str], **kwargs) -> plt.Figure:
@@ -124,7 +143,7 @@ class PlotGenerator:
             ax.set_xlabel('Count')
         else:
             # First variable is numeric, second is categorical
-            grouped = self.data.groupby(variables[1])[variables[0]].mean()
+            grouped = self.data.groupby(variables[1])[variables[0]].value_counts()
             ax.barh(grouped.index.astype(str), grouped.values, **kwargs)
             ax.set_ylabel(variables[1])
             ax.set_xlabel(f"Mean {variables[0]}")
@@ -491,63 +510,7 @@ class SmartPlotGenerator(PlotGenerator):
             
         return fig
 
-    def _create_bar(self, variables: List[str], **kwargs) -> plt.Figure:
-        """Enhanced bar plot that handles both single variable and grouped cases."""
-        fig, ax = plt.subplots()
-        
-        if len(variables) == 1:
-            # Single variable - show value counts
-            data = self.data[variables[0]].dropna()
-            if len(data) == 0:
-                raise ValueError(f"No valid data remaining for {variables[0]}")
-                
-            value_counts = data.value_counts()
-            ax.bar(value_counts.index.astype(str), value_counts.values, **kwargs)
-            ax.set_xlabel(variables[0])
-            ax.set_ylabel('Count')
-            ax.set_title(f"Bar plot of {variables[0]}")
-        else:
-            # First variable is numeric, second is categorical
-            clean_data = self.data[[variables[0], variables[1]]].dropna()
-            if len(clean_data) == 0:
-                raise ValueError(f"No valid data remaining after cleaning {variables[0]} and {variables[1]}")
-                
-            grouped = clean_data.groupby(variables[1])[variables[0]].mean()
-            ax.bar(grouped.index.astype(str), grouped.values, **kwargs)
-            ax.set_xlabel(variables[1])
-            ax.set_ylabel(f"Mean {variables[0]}")
-            ax.set_title(f"Bar plot: Mean {variables[0]} by {variables[1]}")
-            
-        return fig
-
-    def _create_barh(self, variables: List[str], **kwargs) -> plt.Figure:
-        """Enhanced horizontal bar plot that handles both single variable and grouped cases."""
-        fig, ax = plt.subplots()
-        
-        if len(variables) == 1:
-            # Single variable - show value counts
-            data = self.data[variables[0]].dropna()
-            if len(data) == 0:
-                raise ValueError(f"No valid data remaining for {variables[0]}")
-                
-            value_counts = data.value_counts()
-            ax.barh(value_counts.index.astype(str), value_counts.values, **kwargs)
-            ax.set_ylabel(variables[0])
-            ax.set_xlabel('Count')
-            ax.set_title(f"Horizontal bar plot of {variables[0]}")
-        else:
-            # First variable is numeric, second is categorical
-            clean_data = self.data[[variables[0], variables[1]]].dropna()
-            if len(clean_data) == 0:
-                raise ValueError(f"No valid data remaining after cleaning {variables[0]} and {variables[1]}")
-                
-            grouped = clean_data.groupby(variables[1])[variables[0]].mean()
-            ax.barh(grouped.index.astype(str), grouped.values, **kwargs)
-            ax.set_ylabel(variables[1])
-            ax.set_xlabel(f"Mean {variables[0]}")
-            ax.set_title(f"Horizontal bar plot: Mean {variables[0]} by {variables[1]}")
-            
-        return fig
+   
 
 
 # Global instance of the plot generator
@@ -608,8 +571,10 @@ def plotgen(
         temp_df = pd.DataFrame([updated_suggestion])
         _plot_generator_instance.suggestions = temp_df
         
+        # Generate the plot
         return _plot_generator_instance.generate_plot(0, **plot_kwargs)
-
+        
+        
     # Handle case where suggestion is an index
     elif isinstance(suggestion, int):
         if suggestions_df is None:
@@ -642,45 +607,46 @@ def plotgen(
         suggestions_df.iloc[suggestion] = updated_suggestion
         _plot_generator_instance.suggestions = suggestions_df
         
+       # Generate the plot
         return _plot_generator_instance.generate_plot(suggestion, **plot_kwargs)
-
+        
     else:
         raise TypeError("suggestion must be either an integer index or a pandas Series")
 
 
-# # Example usage:
-# if __name__ == "__main__":
-#     import seaborn as sns
-#     from typing import Union
+# Example usage:
+if __name__ == "__main__":
+    import seaborn as sns
+    from typing import Union
     
-#     # Load data
-#     titanic = sns.load_dataset('titanic')
+    # Load data
+    titanic = sns.load_dataset('titanic')
     
-#     # Create sample recommendations
-#     recommendations = pd.DataFrame({
-#         'plot_type': ['bar', 'hist', 'boxplot', 'scatter', 'pie', 'violinplot'],
-#         'variables': ['fare', 'age', 'fare,class', 'age,fare', 'class', 'fare,class'],
-#         'ensemble_score': [0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
-#     })
+    # Create sample recommendations
+    recommendations = pd.DataFrame({
+        'plot_type': ['bar', 'hist', 'boxplot', 'scatter', 'pie', 'violinplot'],
+        'variables': ['fare', 'age', 'fare,class', 'age,fare', 'class', 'fare,class'],
+        'ensemble_score': [0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
+    })
     
-#     # Test all calling conventions
-#     fig1 = plotgen(titanic, 2, recommendations)  # Using index
-#     plt.show()
+    # Test all calling conventions
+    fig1 = plotgen(titanic, 2, recommendations)  # Using index
+    plt.show()
     
-#     fig2 = plotgen(titanic, recommendations.iloc[3])  # Using Series
-#     plt.show()
+    fig2 = plotgen(titanic, recommendations.iloc[3])  # Using Series
+    plt.show()
     
-#     # Test with single variable plots
-#     fig3 = plotgen(titanic, 0, recommendations)  # Bar plot of fare
-#     plt.show()
+    # Test with single variable plots
+    fig3 = plotgen(titanic, 0, recommendations)  # Bar plot of fare
+    plt.show()
     
-#     fig4 = plotgen(titanic, 1, recommendations)  # Histogram of age
-#     plt.show()
+    fig4 = plotgen(titanic, 1, recommendations)  # Histogram of age
+    plt.show()
     
-#     # Test with grouped plots
-#     fig5 = plotgen(titanic, 5, recommendations)  # Violin plot of fare by class
-#     plt.show()
+    # Test with grouped plots
+    fig5 = plotgen(titanic, 5, recommendations)  # Violin plot of fare by class
+    plt.show()
     
-#     # Test with direct Series access
-#     fig6 = plotgen(titanic, recommendations.iloc[4])  # Pie chart of class
-#     plt.show()
+    # Test with direct Series access
+    fig6 = plotgen(titanic, recommendations.iloc[4])  # Pie chart of class
+    plt.show()
