@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple, Callable
 from collections import defaultdict
 from dotenv import load_dotenv
 import pandas as pd
+import numpy as np
 import warnings
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
@@ -169,6 +170,10 @@ class VisualizationRecommender:
 
         # Apply weighted ensemble scoring
         ensemble_results = self._apply_ensemble_scoring(all_recommendations, weights)
+
+         # Validate and correct variable order
+        if not ensemble_results.empty:
+            ensemble_results = self._validate_variable_order(ensemble_results)
 
         # If we don't have enough results, try to supplement
         if len(ensemble_results) < n:
@@ -341,27 +346,67 @@ class VisualizationRecommender:
             return results[output_columns]
 
         return pd.DataFrame(columns=output_columns)
-
+    
     def _describe_dataframe(self) -> str:
         num_cols = len(self.df.columns)
         sample_size = min(3, len(self.df))
+        desc: List[str] = []
 
-        desc = [
-            f"DataFrame Shape: {self.df.shape}",
-            f"Columns ({num_cols}): {', '.join(self.df.columns)}",
-            "\nColumn Details:",
-        ]
+        # --- Basic Metadata ---
+        desc.append(f"DataFrame Shape: {self.df.shape}")
+        desc.append(f"Columns ({num_cols}): {', '.join(self.df.columns)}")
+        desc.append("\nColumn Details:")
 
+        # --- Column-Level Analysis ---
         for col in self.df.columns:
-            dtype = str(self.df[col].dtype)
+            # Determine semantic type (more granular than dtype)
+            if pd.api.types.is_datetime64_dtype(self.df[col]):
+                col_type = "datetime"
+            elif pd.api.types.is_numeric_dtype(self.df[col]):
+                col_type = "numerical"
+            elif self.df[col].nunique() / len(self.df[col]) < 0.05:  # Low cardinality
+                col_type = "categorical"
+            else:
+                col_type = "text/other"
+
+            # Basic info
             unique_count = self.df[col].nunique()
             sample_values = self.df[col].dropna().head(sample_size).tolist()
-
             desc.append(
-                f"- {col}: {dtype} ({unique_count} unique values), sample: {sample_values}"
+                f"- {col}: {col_type} ({unique_count} unique values), sample: {sample_values}"
             )
 
+            # Add stats for numerical/datetime
+            if col_type == "numerical":
+                desc.append(
+                    f"  Stats: min={self.df[col].min()}, max={self.df[col].max()}, "
+                    f"mean={self.df[col].mean():.2f}, missing={self.df[col].isna().sum()}"
+                )
+            elif col_type == "datetime":
+                desc.append(
+                    f"  Range: {self.df[col].min()} to {self.df[col].max()}, "
+                    f"missing={self.df[col].isna().sum()}"
+                )
+
+        # --- Relationship Analysis ---
+        numerical_cols = self.df.select_dtypes(include=np.number).columns.tolist()
+        if len(numerical_cols) > 1:
+            desc.append("\nNumerical Variable Correlations (Pearson):")
+            corr = self.df[numerical_cols].corr().round(2)
+            desc.append(str(corr))
+
+        # Categorical-numerical potential groupings
+        categorical_cols = [
+            col for col in self.df.columns 
+            if self.df[col].nunique() / len(self.df[col]) < 0.05
+        ]
+        if categorical_cols and numerical_cols:
+            desc.append("\nPotential Groupings (categorical vs numerical):")
+            desc.append(f"  - Could group by: {categorical_cols}")
+            desc.append(f"  - To analyze: {numerical_cols}")
+
         return "\n".join(desc)
+
 
     def _create_prompt(self, df_description: str) -> str:
         return textwrap.dedent(f"""
@@ -373,9 +418,16 @@ class VisualizationRecommender:
             For each suggestion, follow this exact format:
 
             Plot Type: <matplotlib function name - exact, like bar, scatter, hist, boxplot, pie, contour, quiver, etc.>
-            Variables: <comma-separated list of variables>
+            Variables: <comma-separated list of variables WITH NUMERICAL VARIABLES FIRST>
             Rationale: <1-2 sentences explaining why this visualization is useful>
             ---
+
+            CRITICAL VARIABLE ORDERING RULES:
+            1. If a suggestion includes both numerical and categorical variables, NUMERICAL VARIABLES MUST COME FIRST.
+            - Correct: "income, gender"  
+            - Incorrect: "gender, income"
+            2. For plots requiring two numerical variables (e.g., scatter), order by analysis priority (dependent variable first).
+            3. For single-variable plots, use natural order (e.g., "age" for a histogram).
 
             GENERAL RULES FOR ALL PLOT TYPES:
             1. Ensure the plot type is a valid matplotlib function
@@ -386,13 +438,13 @@ class VisualizationRecommender:
             6. Always specify complete variable sets
 
             COMMON PLOT TYPE REQUIREMENTS (non-exhaustive):
-            1. bar: 1 categorical (x) + 1 numerical (y)
-            2. scatter: Exactly 2 numerical variables
-            3. hist: Exactly 1 numerical variable
-            4. boxplot: 1 numerical OR 1 categorical + 1 numerical
-            5. pie: Exactly 1 categorical variable
-            6. line: 1 numerical (y) OR 1 date/time (x) + 1 numerical (y)
-            7. heatmap: 2 categorical + 1 numerical OR correlation matrix
+            1. bar: 1 categorical (x) + 1 numerical (y)  → Variables: [numerical], [categorical]
+            2. scatter: Exactly 2 numerical → Variables: [independent], [dependent]
+            3. hist: Exactly 1 numerical → Variables: [numerical]
+            4. boxplot: 1 numerical OR 1 numerical + 1 categorical → Variables: [numerical], [categorical] (if grouped)
+            5. pie: Exactly 1 categorical → Variables: [categorical]
+            6. line: 1 numerical (y) OR 1 numerical (y) + 1 datetime (x) → Variables: [y], [x] (if applicable)
+            7. heatmap: 2 categorical + 1 numerical OR correlation matrix → Variables: [numerical], [categorical], [categorical]
             8. violinplot: Same as boxplot
             9. hexbin: Exactly 2 numerical variables
             10. pairplot: 2+ numerical variables
@@ -418,32 +470,26 @@ class VisualizationRecommender:
             3. Suggest plots that would reveal meaningful insights about the data
             4. Include both common and advanced plots when appropriate
 
-            Example CORRECT suggestions:
+            Example CORRECT suggestions (NUMERICAL FIRST):
             Plot Type: boxplot
-            Variables: price
-            Rationale: Shows distribution of prices across all observations
+            Variables: income, gender  
+            Rationale: Compares income distribution across genders
             ---
-            Plot Type: contour
-            Variables: x_grid, y_grid, density
-            Rationale: Visualizes density changes across a 2D space
+            Plot Type: scatter
+            Variables: age, income  
+            Rationale: Shows relationship between age and income
             ---
-            Plot Type: quiver
-            Variables: x_pos, y_pos, x_dir, y_dir
-            Rationale: Shows vector field of directions and magnitudes
-            ---
-            Plot Type: imshow
-            Variables: image_matrix
-            Rationale: Displays the 2D image data
+            Plot Type: bar
+            Variables: revenue, product_category  
+            Rationale: Compares revenue across product categories
 
-            Example INCORRECT suggestions (NEVER DO THESE):
+            Example INCORRECT suggestions (REJECT THESE):
             Plot Type: boxplot
-            Variables: age, income  # WRONG - two numericals
+            Variables: gender, income  # WRONG - categorical listed first
             ---
-            Plot Type: pie
-            Variables: salary  # WRONG - numerical variable
-            ---
-            Plot Type: contour
-            Variables: temperature  # WRONG - needs 3 variables for 2D contour
+            Plot Type: scatter
+            Variables: price, weight  # WRONG - no clear priority order
+            Rationale: Should specify independent/dependent variable order
         """)
 
     def _query_llm(self, prompt: str, model: str) -> str:
@@ -461,7 +507,49 @@ class VisualizationRecommender:
             return response.choices[0].message.content
         except Exception as e:
             raise RuntimeError(f"Groq API query failed for {model}: {str(e)}")
-
+    
+    def _validate_variable_order(self, recommendations: pd.DataFrame) -> pd.DataFrame:
+        """
+        Validate and correct the order of variables in recommendations, 
+        ensuring numerical variables come first.
+        
+        Args:
+            recommendations: DataFrame of visualization recommendations
+        
+        Returns:
+            DataFrame with corrected variable order
+        """
+        def _reorder_variables(row):
+            # Split variables
+            variables = [var.strip() for var in row['variables'].split(',')]
+            
+            # Identify numerical and non-numerical variables
+            numerical_vars = [
+                var for var in variables 
+                if pd.api.types.is_numeric_dtype(self.df[var])
+            ]
+            non_numerical_vars = [
+                var for var in variables 
+                if var not in numerical_vars
+            ]
+            
+            # Combine with numerical variables first
+            corrected_vars = numerical_vars + non_numerical_vars
+            
+            # Update the row with corrected variable order
+            row['variables'] = ', '.join(corrected_vars)
+            return row
+        
+        # Apply reordering
+        corrected_recommendations = recommendations.apply(_reorder_variables, axis=1)
+        
+        if self.debug:
+            print("\n[DEBUG] Variable Order Validation:")
+            for orig, corrected in zip(recommendations['variables'], corrected_recommendations['variables']):
+                if orig != corrected:
+                    print(f"  Corrected: {orig} → {corrected}")
+        
+        return corrected_recommendations
 
     def _parse_recommendations(self, response: str, model: str) -> List[Dict]:
         """Parse the LLM response into structured recommendations"""
@@ -485,11 +573,10 @@ class VisualizationRecommender:
                         rec['plot_type'] = line.split(':', 1)[1].strip().lower()
                     elif line.lower().startswith('variables:'):
                         raw_vars = line.split(':', 1)[1].strip()
-                        # Get all variables first
-
                         # Filter variables to only those that exist in DataFrame
                         variables = [v.strip() for v in raw_vars.split(',') if v.strip() in self.df.columns]
                         rec['variables'] = ', '.join([var for var in variables if var in self.df.columns])
+                        #rec['variables'] = self._reorder_variables(', '.join(variables))  # Keep original order for now
                 
                 if 'plot_type' in rec and 'variables' in rec and rec['variables']:
                     recommendations.append(rec)
@@ -498,8 +585,6 @@ class VisualizationRecommender:
                 continue
         
         return recommendations
-    
-
 
 # Package-level convenience function
 _recommender_instance = None
@@ -533,3 +618,13 @@ def recommender(
         n=n,
         custom_weights=custom_weights
     )
+
+# Example usage:
+if __name__ == "__main__":
+    import seaborn as sns
+    
+    # Load data
+    titanic = sns.load_dataset('titanic')
+
+    recommendation = recommender(titanic, n=20, debug=True)
+    print(recommendation)

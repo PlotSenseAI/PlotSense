@@ -309,3 +309,32 @@ def explainer(
         iterations=iterations
     )
 
+
+# Example usage
+# In your __main__ block, change to:
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # Create a sample plot
+    x = np.linspace(0, 10, 100)
+    y = np.sin(x)
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(x, y)
+    plt.title('Sine Wave Visualization')
+    plt.xlabel('X-axis')
+    plt.ylabel('Y-axis')
+
+    try:
+        # Get iteratively refined explanation
+        result = explainer(
+            plt.gca(), 
+            prompt="Explain the mathematical and visual characteristics of this sine wave",
+            api_keys={'groq': os.getenv('GROQ_API_KEY')}  # Get from environment
+        )
+        
+        print("Final Explanation:")
+        print(result)  # Changed since your function returns a string now
+    except Exception as e:
+        print(f"Error generating explanation: {str(e)}")

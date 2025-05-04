@@ -1,3 +1,5 @@
 from plotsense.visual_suggestion.suggestions import recommender, VisualizationRecommender
 from plotsense.explanations.explanations import explainer,PlotExplainer
 from plotsense.plot_generator.generator import plotgen, PlotGenerator
+from plotsense.explanations.explanationsv2 import explainer2
+from plotsense.explanations.explanationsv3 import explain_plot

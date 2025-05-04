@@ -1,1 +1,3 @@
 from plotsense.explanations.explanations import explainer, PlotExplainer
+from plotsense.explanations.explanationsv2 import explainer2
+from plotsense.explanations.explanationsv3 import explain_plot

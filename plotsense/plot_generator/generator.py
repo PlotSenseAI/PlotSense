@@ -101,37 +101,44 @@ class PlotGenerator:
         x_label = kwargs.pop('x_label', None)
         y_label = kwargs.pop('y_label', None)
         title = kwargs.pop('title', None)
+
+        # Define font sizes
+        tick_fontsize = kwargs.pop('tick_fontsize', 12)
+        label_fontsize = kwargs.pop('label_fontsize', 14)
+        title_fontsize = kwargs.pop('title_fontsize', 16)
             
         if len(variables) == 1:
             # Single variable - show value counts
             value_counts = self.data[variables[0]].value_counts()
             ax.bar(value_counts.index.astype(str), value_counts.values, **kwargs)
-            ax.set_xlabel(variables[0] if x_label is None else x_label)
-            ax.set_ylabel('Count' if y_label is None else y_label)
-            ax.set_title(f"Bar plot of {variables[0]}" if title is None else title)
+            ax.set_xlabel(variables[0] if x_label is None else x_label, fontsize=label_fontsize)
+            ax.set_ylabel('Count' if y_label is None else y_label, fontsize=label_fontsize)
+            ax.set_title(f"Bar plot of {variables[0]}" if title is None else title, fontsize=title_fontsize)
+            ax.tick_params(axis='x', labelsize=tick_fontsize)
+            ax.tick_params(axis='y', labelsize=tick_fontsize)
+            ax.grid(True, linestyle='--', alpha=0.7)
 
-            # Rotate xticks if too many
             if len(value_counts) > 10:
-                # Increase figure width and rotate xticks
-                fig.set_size_inches(max(12, len(value_counts) * 0.5), 8)
-                plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+                fig.set_size_inches(max(12, len(value_counts)), 8)
+                plt.setp(ax.get_xticklabels(), rotation=90, ha='center')
                 
         else:
             # First variable is numeric, second is categorical
             grouped = self.data.groupby(variables[1])[variables[0]].mean()
             ax.bar(grouped.index.astype(str), grouped.values, **kwargs)
-            ax.set_xlabel(variables[1] if x_label is None else x_label)
-            ax.set_ylabel(f"Mean {variables[0]}" if y_label is None else y_label)
-            ax.set_title(f"Mean {variables[0]} by {variables[1]}" if title is None else title)
+            ax.set_xlabel(variables[1] if x_label is None else x_label, fontsize=label_fontsize)
+            ax.set_ylabel(f"Mean {variables[0]}" if y_label is None else y_label, fontsize=label_fontsize)
+            ax.set_title(f"Mean {variables[0]} by {variables[1]}" if title is None else title, fontsize=title_fontsize)
+            ax.tick_params(axis='x', labelsize=tick_fontsize)
+            ax.tick_params(axis='y', labelsize=tick_fontsize)
+            ax.grid(True, linestyle='--', alpha=0.7)
 
-            # Rotate xticks if too many
             if len(grouped) > 10:
-                # Increase figure width and rotate xticks
-                fig.set_size_inches(max(12, len(grouped) * 0.5), 8)
-                plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+                fig.set_size_inches(max(12, len(grouped)), 8)
+                plt.setp(ax.get_xticklabels(), rotation=90, ha='center')
             
         return fig
-    
+        
     def _create_barh(self, variables: List[str], **kwargs) -> plt.Figure:
         fig, ax = plt.subplots()
         
