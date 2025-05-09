@@ -127,8 +127,8 @@ class PlotGenerator:
             grouped = self.data.groupby(variables[1])[variables[0]].mean()
             ax.bar(grouped.index.astype(str), grouped.values, **kwargs)
             ax.set_xlabel(variables[1] if x_label is None else x_label, fontsize=label_fontsize)
-            ax.set_ylabel(f"Mean {variables[0]}" if y_label is None else y_label, fontsize=label_fontsize)
-            ax.set_title(f"Mean {variables[0]} by {variables[1]}" if title is None else title, fontsize=title_fontsize)
+            ax.set_ylabel(f"{variables[0]}" if y_label is None else y_label, fontsize=label_fontsize)
+            ax.set_title(f"{variables[0]} by {variables[1]}" if title is None else title, fontsize=title_fontsize)
             ax.tick_params(axis='x', labelsize=tick_fontsize)
             ax.tick_params(axis='y', labelsize=tick_fontsize)
             ax.grid(True, linestyle='--', alpha=0.7)
@@ -420,6 +420,10 @@ class SmartPlotGenerator(PlotGenerator):
             ax.set_xlabel(categorical_var)
             ax.set_ylabel(numerical_var)
             ax.set_title(f"Box plot of {numerical_var} by {categorical_var}")
+
+            if len(grouped_data) > 10:
+                fig.set_size_inches(max(12, len(grouped_data)), 8)
+                plt.setp(ax.get_xticklabels(), rotation=90, ha='center')
         else:
             raise ValueError("Box plot requires at least 1 variable")
             

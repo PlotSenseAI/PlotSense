@@ -81,6 +81,7 @@ class IterativeRefinementExplainer:
 
     def iterative_plot_explanation(
         self, 
+        data: Union[pd.DataFrame, np.ndarray],
         plot_object: Union[plt.Figure, plt.Axes],
         prompt: str = "Explain this data visualization",
         custom_parameters: Optional[Dict] = None
@@ -88,42 +89,130 @@ class IterativeRefinementExplainer:
         """
         Generate an iteratively refined explanation using multiple models
         """
-        # Validate models availability
         if not self.available_models:
             raise ValueError("No available models for explanation generation")
 
         # Convert plot to base64
         img_bytes = self._convert_plot_to_base64(plot_object)
         
-        # Metadata extraction
-        metadata = self._extract_plot_metadata(plot_object)
+        # Metadata extraction from data and plot
+        metadata = self._extract_metadata(data, plot_object)
 
         # Iterative refinement process
         current_explanation = None
         
-        # Rotate through available models
         for iteration in range(self.max_iterations):
-            # Select model for this iteration
             current_model = self.available_models[iteration % len(self.available_models)]
             
-            # Generate or refine explanation
             if current_explanation is None:
-                # Initial explanation generation
                 current_explanation = self._generate_initial_explanation(
                     current_model, img_bytes, prompt, metadata, custom_parameters
                 )
             else:
-                # Generate critique
                 critique = self._generate_critique(
                     img_bytes, current_explanation, prompt, current_model, metadata, custom_parameters
                 )
                 
-                # Generate refinement based on critique
                 current_explanation = self._generate_refinement(
                     img_bytes, current_explanation, critique, prompt, current_model, metadata, custom_parameters
                 )
 
         return current_explanation
+    
+    def _extract_metadata(self, data: Union[pd.DataFrame, np.ndarray], plot_object: Union[plt.Figure, plt.Axes]) -> Dict[str, Any]:
+        """Combine data and plot metadata for comprehensive analysis"""
+        if isinstance(data, pd.DataFrame):
+            metadata = self._extract_dataframe_metadata(data, plot_object)
+        else:
+            metadata = self._extract_array_metadata(data, plot_object)
+
+        # Add additional validation for bar plot data
+        if isinstance(plot_object, plt.Axes) and len(plot_object.patches) > 0:
+            # Get direct measurements from the plot
+            heights = [p.get_height() for p in plot_object.patches]
+            xlabels = [label.get_text() for label in plot_object.get_xticklabels()]
+            
+            # Ensure we have matching labels and heights
+            if len(heights) == len(xlabels):
+                # Find maximum value and its corresponding label
+                max_height = max(heights)
+                max_index = heights.index(max_height)
+                max_label = xlabels[max_index]
+                
+                metadata.update({
+                    'bar_data': {
+                        'heights': heights,
+                        'labels': xlabels,
+                        'max_value': max_height,
+                        'max_label': max_label,
+                        'value_label_pairs': list(zip(xlabels, heights))
+                    }
+                })
+
+        return metadata
+
+    def _extract_dataframe_metadata(self, df: pd.DataFrame, plot_object: Union[plt.Figure, plt.Axes]) -> Dict[str, Any]:
+        """Extract metadata from DataFrame and plot with alignment check"""
+        metadata = {
+            'data_summary': df.describe().to_dict(),
+            'statistical_summary': {},
+            'plot_info': self._extract_plot_metadata(plot_object),
+            'data_plot_alignment': {}
+        }
+        
+        # Compare plot data with dataframe
+        plot_data = self._get_data_dimensions(plot_object)
+        if 'values' in plot_data:  # Bar plot case
+            metadata['data_plot_alignment'] = {
+                'match': len(df) == len(plot_data['values']),
+                'data_length': len(df),
+                'plot_length': len(plot_data['values'])
+            }
+            
+        return metadata
+
+    def _compute_column_statistics(self, series: pd.Series) -> Dict:
+        """Compute statistics for a column"""
+        return {
+            'mean': series.mean(),
+            'median': series.median(),
+            'std': series.std(),
+            'min': series.min(),
+            'max': series.max(),
+            'quartiles': series.quantile([0.25, 0.75]).to_dict()
+        }
+
+    def _extract_array_metadata(self, arr: np.ndarray, plot_object: Union[plt.Figure, plt.Axes]) -> Dict[str, Any]:
+        """Extract metadata from numpy array and plot"""
+        try:
+            metadata = {
+                'data_summary': {
+                    'mean': np.mean(arr),
+                    'median': np.median(arr),
+                    'std_dev': np.std(arr),
+                    'min': np.min(arr),
+                    'max': np.max(arr),
+                    'quartiles': {
+                        '25%': np.percentile(arr, 25),
+                        '75%': np.percentile(arr, 75)
+                    }
+                },
+                'plot_info': self._extract_plot_metadata(plot_object)
+            }
+            
+            return metadata
+            
+        except Exception as e:
+            warnings.warn(f"Error extracting array metadata: {e}")
+            return {}
+
+    def _extract_plot_metadata(self, plot_object: Union[plt.Figure, plt.Axes]) -> Dict[str, Any]:
+        """Extract comprehensive metadata about the plot"""
+        metadata = {
+            'data_dimensions': self._get_data_dimensions(plot_object),
+            'statistical_summary': self._compute_statistical_summary(plot_object)
+        }
+        return metadata
     
     def _generate_initial_explanation(
         self, 
@@ -329,20 +418,40 @@ class IterativeRefinementExplainer:
         buf.seek(0)
         return base64.b64encode(buf.getvalue()).decode('utf-8')
 
-    def _extract_plot_metadata(self, plot_object: Union[plt.Figure, plt.Axes]) -> Dict[str, Any]:
-        """Extract comprehensive metadata about the plot"""
-        metadata = {
-            'data_dimensions': self._get_data_dimensions(plot_object),
-            'statistical_summary': self._compute_statistical_summary(plot_object)
-        }
-        return metadata
-
     def _get_data_dimensions(self, plot_object: Union[plt.Figure, plt.Axes]) -> Dict:
-        """Extract data dimensions and characteristics"""
+        """Extract data dimensions and characteristics for both line and bar plots"""
         try:
             if isinstance(plot_object, plt.Axes):
-                for line in plot_object.get_lines():
-                    data = line.get_data()
+                # Handle bar plots
+                if len(plot_object.patches) > 0:
+                    # Get heights and labels
+                    heights = [p.get_height() for p in plot_object.patches]
+                    xlabels = [label.get_text() for label in plot_object.get_xticklabels()]
+                    
+                    # Ensure labels and heights are properly aligned
+                    if len(heights) == len(xlabels):
+                        # Find maximum value and its label
+                        max_height = max(heights)
+                        max_index = heights.index(max_height)
+                        max_label = xlabels[max_index]
+                        
+                        # Create value-label pairs for verification
+                        value_label_pairs = list(zip(xlabels, heights))
+                        
+                        return {
+                            'values': heights,
+                            'labels': xlabels,
+                            'count': len(heights),
+                            'range': (min(heights), max_height),
+                            'max_value': max_height,
+                            'max_index': max_index,
+                            'max_label': max_label,
+                            'value_label_pairs': value_label_pairs
+                        }
+                
+                # Handle line plots (existing code)
+                elif len(plot_object.get_lines()) > 0:
+                    data = plot_object.get_lines()[0].get_data()
                     return {
                         'x_points': len(data[0]),
                         'y_points': len(data[1]),
@@ -352,27 +461,33 @@ class IterativeRefinementExplainer:
         except Exception as e:
             warnings.warn(f"Error extracting data dimensions: {e}")
         return {}
+        
 
     def _compute_statistical_summary(self, plot_object: Union[plt.Figure, plt.Axes]) -> Dict:
-        """Compute statistical summary of plot data"""
         try:
             if isinstance(plot_object, plt.Axes):
-                data = [line.get_data()[1] for line in plot_object.get_lines()]
-                flattened_data = [item for sublist in data for item in sublist]
-                
-                return {
-                    'mean': np.mean(flattened_data),
-                    'median': np.median(flattened_data),
-                    'std_dev': np.std(flattened_data),
-                    'min': np.min(flattened_data),
-                    'max': np.max(flattened_data)
-                }
+                if len(plot_object.patches) > 0:  # Bar plot
+                    heights = [p.get_height() for p in plot_object.patches]
+                    xlabels = [label.get_text() for label in plot_object.get_xticklabels()]
+                    max_height = max(heights)
+                    max_index = heights.index(max_height)
+                    
+                    return {
+                        'mean': np.mean(heights),
+                        'median': np.median(heights),
+                        'std_dev': np.std(heights),
+                        'min': np.min(heights),
+                        'max': max_height,
+                        'max_index': max_index,
+                        'max_label': xlabels[max_index] if max_index < len(xlabels) else None
+                    }
         except Exception as e:
             warnings.warn(f"Error computing statistical summary: {e}")
         return {}
 
 # Convenience function
 def explainer2(
+    data: Union[pd.DataFrame, np.ndarray], 
     plot_object: Union[plt.Figure, plt.Axes], 
     prompt: str = "Explain this data visualization",
     api_keys: Optional[Dict[str, str]] = None,
@@ -399,35 +514,40 @@ def explainer2(
     )
     
     return explainer.iterative_plot_explanation(
+        data,
         plot_object, 
         prompt, 
         custom_parameters
     )
 
 # Example usage
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
-    # Create a sample plot
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x)
+# Sample Data Frame
+data = pd.DataFrame({
+    'x': np.linspace(0, 10, 100),
+    'y': np.sin(np.linspace(0, 10, 100))
+})
 
-    plt.figure(figsize=(10, 6))
-    plt.plot(x, y)
-    plt.title('Sine Wave Visualization')
-    plt.xlabel('X-axis')
-    plt.ylabel('Y-axis')
+# Plot using data
+plt.figure(figsize=(10, 6))
+plt.plot(data['x'], data['y'])
+plt.title('Sine Wave Visualization')
+plt.xlabel('X-axis')
+plt.ylabel('Y-axis')
 
-    try:
-        # Get iteratively refined explanation
-        result = explainer2(
-            plt.gca(), 
-            prompt="Explain the mathematical and visual characteristics of this sine wave",
-            api_keys={'groq': os.getenv('GROQ_API_KEY')}
-        )
-        
-        print("Final Explanation:")
-        print(result)
-    except Exception as e:
-        print(f"Error generating explanation: {str(e)}")
+try:
+    # Get explanation tied to data and plot
+    explanation_result = explainer2(
+        data, 
+        plt.gca(), 
+        prompt="Explain the mathematical and visual characteristics of this sine wave",
+        api_keys={'groq': os.getenv('GROQ_API_KEY')}
+    )
+    
+    print("Final Explanation:")
+    print(explanation_result)
+
+except Exception as e:
+    print(f"Error generating explanation: {str(e)}")

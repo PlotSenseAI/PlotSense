@@ -4,51 +4,50 @@ from io import BytesIO
 import matplotlib.pyplot as plt
 from typing import Union, Optional, Dict, List
 from dotenv import load_dotenv
-from groq import Groq
+import requests
 import warnings
 import builtins
 
 load_dotenv()
+
 class PlotExplainer:
     DEFAULT_MODELS = {
-        'groq': ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-90b-vision-preview'],
-        # Add other providers here
+        'huggingface': [
+            'Salesforce/blip-image-captioning-large',  # Image-to-text
+            'mistralai/Mixtral-8x7B-Instruct-v0.1',  # Text-to-text
+            'google/gemma-7b-it'  # Alternative text-to-text
+        ],
     }
     
-    def __init__(self, api_keys: Optional[Dict[str, str]] = None,interactive: bool = True, timeout: int = 30):
+    def __init__(self, api_keys: Optional[Dict[str, str]] = None, interactive: bool = True, timeout: int = 30):
         """
         Initialize PlotExplainer with API keys and configuration.
         
         Args:
             api_keys: Optional dictionary of API keys. If not provided,
                      keys will be loaded from environment variables.
+            interactive: Whether to prompt for missing keys interactively
             timeout: Timeout in seconds for API requests
         """
         # Default to empty dict if None
         api_keys = api_keys or {}
 
-         # Set up default keys from environment variables
+        # Set up default keys from environment variables
         self.api_keys = {
-            'groq': os.getenv('GROQ_API_KEY')
-            # Add other services here
+            'huggingface': os.getenv('HF_API_KEY')
         }
         self.api_keys.update(api_keys)
     
         self.interactive = interactive
         self.timeout = timeout
-        self.clients = {}
         self.available_models = []
         
-        self.api_keys.update(api_keys)
-        
         self._validate_keys()
-        self._initialize_clients()
         self._detect_available_models()
-
 
     def _validate_keys(self):
         """Validate that required API keys are present"""
-        for service in ['groq']:
+        for service in ['huggingface']:
             if not self.api_keys.get(service):
                 if self.interactive:
                     try:
@@ -56,28 +55,16 @@ class PlotExplainer:
                         if not self.api_keys[service]:
                             raise ValueError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
-                            # Handle cases where input is not available
+                        # Handle cases where input is not available
                         raise ValueError(f"{service.upper()} API key is required")
                 else:
                     raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
 
-    def _initialize_clients(self):
-        """Initialize API clients"""
-        self.clients = {}
-        if self.api_keys.get('groq'):
-            try:
-                import groq
-                self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
-            except ImportError:
-                warnings.warn("Groq Python client not installed. pip install groq", ImportWarning)
-
     def _detect_available_models(self):
+        """Detect available models - for now we'll assume all DEFAULT_MODELS are available"""
         self.available_models = []
-        for provider, client in self.clients.items():
-            if client and provider in self.DEFAULT_MODELS:
-                # For now we'll assume all DEFAULT_MODELS are available
-                # In a real implementation, you might want to check which models are actually available
-                self.available_models.extend(self.DEFAULT_MODELS[provider])
+        if self.api_keys.get('huggingface'):
+            self.available_models.extend(self.DEFAULT_MODELS['huggingface'])
     
     def refine_plot_explanation(
         self, 
@@ -110,11 +97,17 @@ class PlotExplainer:
         img_bytes = self._plot_to_bytes(plot_object)
         models = model_rotation or self._select_model_rotation()
         
+        # Start with image captioning model for initial explanation
         explanation = self._generate_explanation(img_bytes, prompt, models[0])
         
+        # Use text models for refinement iterations
+        text_models = [m for m in models if m not in ['Salesforce/blip-image-captioning-large']]
+        if not text_models:
+            text_models = models  # Fallback to all models if no text-specific models found
+        
         for i in range(iterations - 1):
-            critic = models[i % len(models)]
-            refiner = models[(i + 1) % len(models)]
+            critic = text_models[i % len(text_models)]
+            refiner = text_models[(i + 1) % len(text_models)]
             
             critique = self._generate_critique(
                 img_bytes, explanation, prompt, critic
@@ -134,27 +127,27 @@ class PlotExplainer:
             fig = plot_object
 
         # Standardize image generation
-        fig.set_size_inches(12, 8)   
+        fig.set_size_inches(8, 6)   
         buf = BytesIO()
-        fig.savefig(buf, format='png',dpi=100, bbox_inches='tight')
+        fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
         buf.seek(0)
         return buf.getvalue()
     
     def _select_model_rotation(self):
         """Select models to use based on availability"""
         priority_order = [
-            'meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-90b-vision-preview'
+            'Salesforce/blip-image-captioning-large',  # Best for initial image description
+            'mistralai/Mixtral-8x7B-Instruct-v0.1',  # Strong for text refinement
+            'google/gemma-7b-it'  # Alternative for refinement
         ]
         return [m for m in priority_order if m in self.available_models]
     
     def _query_model(self, img_bytes: bytes, prompt: str, model: str) -> str:
         """Generic method to query different models"""
-        if model in ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.2-90b-vision-preview']:
-            response = self._query_llama3(img_bytes, prompt)
+        if model == 'Salesforce/blip-image-captioning-large':
+            return self._query_image_to_text(img_bytes, prompt, model)
         else:
-            raise ValueError(f"Unsupported model: {model}")
-        
-        return response
+            return self._query_text_model(prompt, model)
         
     def _generate_explanation(self, img_bytes: bytes, prompt: str, model: str) -> str:
         """Generate initial explanation"""
@@ -189,7 +182,7 @@ class PlotExplainer:
         
         Provide your critique in a bullet-point format.
         """
-        return self._query_model(img_bytes, critique_prompt, model)
+        return self._query_text_model(critique_prompt, model)
     
     def _generate_refinement(self, img_bytes: bytes, explanation: str, critique: str, prompt: str, model: str) -> str:
         """Generate refined explanation"""
@@ -215,19 +208,19 @@ class PlotExplainer:
         
         Return the improved explanation with the same section headers.
         """
-        return self._query_model(img_bytes, refinement_prompt, model)
+        return self._query_text_model(refinement_prompt, model)
     
-    def _query_llama3(self, img_bytes: bytes, prompt: str) -> str:
-        """Query Groq's Llama3 model with plot image"""
-        # Initialize client with API key if not already done
-        if 'groq' not in self.clients:
-            raise ValueError("Groq client not initialized")
-        
-        client = self.clients['groq']  # Use the client from initialization
+    def _query_image_to_text(self, img_bytes: bytes, prompt: str, model: str) -> str:
+        """Query Hugging Face image-to-text model with plot image"""
+        api_url = f"https://api-inference.huggingface.co/models/{model}"
+        headers = {
+            "Authorization": f"Bearer {self.api_keys['huggingface']}",
+            "Content-Type": "application/json"
+        }
         
         # Convert image to base64
         base64_image = base64.b64encode(img_bytes).decode('utf-8')
-
+        
         # Structured prompt template
         structured_prompt = f"""
         {prompt}
@@ -253,36 +246,75 @@ class PlotExplainer:
         
         Keep the response clear, concise, and focused on the data.
         """
+        
+        payload = {
+            "inputs": {
+                "image": base64_image,
+                "text": structured_prompt
+            }
+        }
+        
         try:
-            response = client.chat.completions.create(
-                model="meta-llama/llama-4-scout-17b-16e-instruct",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": structured_prompt},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{base64_image}"
-                                }
-                            }
-                        ]
-                    }
-                ],
-                max_tokens=1000,
+            response = requests.post(
+                api_url,
+                headers=headers,
+                json=payload,
+                timeout=self.timeout
             )
-            return response.choices[0].message.content
-        except Exception as e:
-            print(f"Error calling Groq API: {str(e)}")
+            response.raise_for_status()
+            
+            result = response.json()
+            if isinstance(result, list) and len(result) > 0:
+                return result[0].get('generated_text', 'No explanation generated')
+            elif isinstance(result, dict):
+                return result.get('generated_text', 'No explanation generated')
+            return str(result)
+        except requests.exceptions.RequestException as e:
+            print(f"Error calling Hugging Face API: {str(e)}")
             raise
     
-    # Add similar methods for other models (Claude, Gemini, etc.)
+    def _query_text_model(self, prompt: str, model: str) -> str:
+        """Query Hugging Face text generation model"""
+        api_url = f"https://api-inference.huggingface.co/models/{model}"
+        headers = {
+            "Authorization": f"Bearer {self.api_keys['huggingface']}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "inputs": prompt,
+            "parameters": {
+                "max_new_tokens": 1000,
+                "temperature": 0.7,
+                "do_sample": True
+            }
+        }
+        
+        try:
+            response = requests.post(
+                api_url,
+                headers=headers,
+                json=payload,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            
+            result = response.json()
+            if isinstance(result, list):
+                if len(result) > 0 and isinstance(result[0], dict):
+                    return result[0].get('generated_text', 'No response generated')
+                return str(result[0]) if len(result) > 0 else 'No response generated'
+            elif isinstance(result, dict):
+                return result.get('generated_text', 'No response generated')
+            return str(result)
+        except requests.exceptions.RequestException as e:
+            print(f"Error calling Hugging Face API: {str(e)}")
+            raise
 
 # Package-level convenience function
 _explainer_instance = None
 
-def explainer(
+def explainer4(
     plot_object: Union[plt.Figure, plt.Axes],
     prompt: str = "Explain this data visualization",
     iterations: int = 2,
@@ -311,7 +343,6 @@ def explainer(
 
 
 # Example usage
-# In your __main__ block, change to:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import numpy as np
@@ -328,13 +359,13 @@ if __name__ == "__main__":
 
     try:
         # Get iteratively refined explanation
-        result = explainer(
+        result = explainer4(
             plt.gca(), 
             prompt="Explain the mathematical and visual characteristics of this sine wave",
-            api_keys={'groq': os.getenv('GROQ_API_KEY')}  # Get from environment
+            api_keys={'huggingface': os.getenv('HF_API_KEY')}  # Get from environment
         )
         
         print("Final Explanation:")
-        print(result)  # Changed since your function returns a string now
+        print(result)
     except Exception as e:
         print(f"Error generating explanation: {str(e)}")
