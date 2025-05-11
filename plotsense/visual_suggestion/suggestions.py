@@ -69,18 +69,45 @@ class VisualizationRecommender:
                 
     def _validate_keys(self):
         """Validate that required API keys are present"""
+        service_links = {
+            'groq': '👉 https://console.groq.com/keys 👈'
+        }
+        
         for service in ['groq']:
             if not self.api_keys.get(service):
                 if self.interactive:
                     try:
-                        self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
+                        link = service_links.get(service, f"the {service.upper()} website")
+                        message = (
+                            f"Enter {service.upper()} API key (get it at {link}): "
+                        )
+                        self.api_keys[service] = builtins.input(message).strip()
                         if not self.api_keys[service]:
                             raise ValueError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
-                            # Handle cases where input is not available
-                        raise ValueError(f"{service.upper()} API key is required")
+                        # Handle cases where input is not available
+                        raise ValueError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
                 else:
-                    raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
+                    raise ValueError(
+                        f"{service.upper()} API key is required. "
+                        f"Set it in the environment or pass it as an argument. "
+                        f"You can get it at {service_links.get(service)}"
+                    )
+                    
+    # def _validate_keys(self):
+    #     """Validate that required API keys are present"""
+    #     for service in ['groq']:
+    #         if not self.api_keys.get(service):
+    #             if self.interactive:
+    #                 try:
+    #                     self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
+    #                     if not self.api_keys[service]:
+    #                         raise ValueError(f"{service.upper()} API key is required")
+    #                 except (EOFError, OSError):
+    #                         # Handle cases where input is not available
+    #                     raise ValueError(f"{service.upper()} API key is required")
+    #             else:
+    #                 raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
 
     def _initialize_clients(self):
         """Initialize API clients"""
@@ -627,12 +654,3 @@ def recommender(
         custom_weights=custom_weights
     )
 
-# # Example usage:
-# if __name__ == "__main__":
-#     import seaborn as sns
-    
-#     # Load data
-#     titanic = sns.load_dataset('titanic')
-
-#     recommendation = recommender(titanic, n=20, debug=True)
-#     print(recommendation)

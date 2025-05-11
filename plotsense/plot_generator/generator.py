@@ -562,39 +562,3 @@ def plotgen(
     # else:
     #     raise TypeError("suggestion must be either an integer index or a pandas Series")
 
-# # Example usage:
-# if __name__ == "__main__":
-#     import seaborn as sns
-#     from typing import Union
-    
-#     # Load data
-#     titanic = sns.load_dataset('titanic')
-    
-#     # Create sample recommendations
-#     recommendations = pd.DataFrame({
-#         'plot_type': ['bar', 'hist', 'box', 'scatter', 'pie', 'violin'],
-#         'variables': ['fare', 'age', 'fare,class', 'age,fare', 'class', 'fare,class'],
-#         'ensemble_score': [0.9, 0.8, 0.7, 0.6, 0.5, 0.4]
-#     })
-    
-#     # Test all calling conventions
-#     fig1 = plotgen(titanic, 2, recommendations)  # Using index
-#     plt.show()
-    
-#     fig2 = plotgen(titanic, recommendations.iloc[3])  # Using Series
-#     plt.show()
-    
-#     # Test with single variable plots
-#     fig3 = plotgen(titanic, 0, recommendations)  # Bar plot of fare
-#     plt.show()
-    
-#     fig4 = plotgen(titanic, 1, recommendations)  # Histogram of age
-#     plt.show()
-    
-#     # Test with grouped plots
-#     fig5 = plotgen(titanic, 5, recommendations)  # Violin plot of fare by class
-#     plt.show()
-    
-#     # Test with direct Series access
-#     fig6 = plotgen(titanic, recommendations.iloc[4])  # Pie chart of class
-#     plt.show()

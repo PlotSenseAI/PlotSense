@@ -53,18 +53,31 @@ class PlotExplainer:
         self._detect_available_models()
 
     def _validate_keys(self):
-        """Validate API keys and prompt for input if not provided"""
+        """Validate that required API keys are present"""
+        service_links = {
+            'groq': '👉 https://console.groq.com/keys 👈'
+        }
+        
         for service in ['groq']:
             if not self.api_keys.get(service):
                 if self.interactive:
                     try:
-                        self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
+                        link = service_links.get(service, f"the {service.upper()} website")
+                        message = (
+                            f"Enter {service.upper()} API key (get it at {link}): "
+                        )
+                        self.api_keys[service] = builtins.input(message).strip()
                         if not self.api_keys[service]:
                             raise ValueError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
-                        raise ValueError(f"{service.upper()} API key is required")
+                        # Handle cases where input is not available
+                        raise ValueError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
                 else:
-                    raise ValueError(f"{service.upper()} API key is required")
+                    raise ValueError(
+                        f"{service.upper()} API key is required. "
+                        f"Set it in the environment or pass it as an argument. "
+                        f"You can get it at {service_links.get(service)}"
+                    )
 
     def _initialize_clients(self):
         """Initialize API clients based on provided API keys"""
@@ -104,11 +117,6 @@ class PlotExplainer:
         with open(image_path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
-    # @retry(
-    #     stop=stop_after_attempt(3),  # Try 3 times
-    #     wait=wait_exponential(multiplier=1, min=4, max=10),  # Wait between attempts
-    #     reraise=True
-    # )
     def _query_model(
             self,
             model: str,
