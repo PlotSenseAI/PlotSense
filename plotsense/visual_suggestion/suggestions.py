@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Tuple, Callable
 from collections import defaultdict
 from dotenv import load_dotenv
 import pandas as pd
+import numpy as np
 import warnings
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
@@ -68,18 +69,45 @@ class VisualizationRecommender:
                 
     def _validate_keys(self):
         """Validate that required API keys are present"""
+        service_links = {
+            'groq': '👉 https://console.groq.com/keys 👈'
+        }
+        
         for service in ['groq']:
             if not self.api_keys.get(service):
                 if self.interactive:
                     try:
-                        self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
+                        link = service_links.get(service, f"the {service.upper()} website")
+                        message = (
+                            f"Enter {service.upper()} API key (get it at {link}): "
+                        )
+                        self.api_keys[service] = builtins.input(message).strip()
                         if not self.api_keys[service]:
                             raise ValueError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
-                            # Handle cases where input is not available
-                        raise ValueError(f"{service.upper()} API key is required")
+                        # Handle cases where input is not available
+                        raise ValueError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
                 else:
-                    raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
+                    raise ValueError(
+                        f"{service.upper()} API key is required. "
+                        f"Set it in the environment or pass it as an argument. "
+                        f"You can get it at {service_links.get(service)}"
+                    )
+                    
+    # def _validate_keys(self):
+    #     """Validate that required API keys are present"""
+    #     for service in ['groq']:
+    #         if not self.api_keys.get(service):
+    #             if self.interactive:
+    #                 try:
+    #                     self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
+    #                     if not self.api_keys[service]:
+    #                         raise ValueError(f"{service.upper()} API key is required")
+    #                 except (EOFError, OSError):
+    #                         # Handle cases where input is not available
+    #                     raise ValueError(f"{service.upper()} API key is required")
+    #             else:
+    #                 raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
 
     def _initialize_clients(self):
         """Initialize API clients"""
@@ -169,6 +197,10 @@ class VisualizationRecommender:
 
         # Apply weighted ensemble scoring
         ensemble_results = self._apply_ensemble_scoring(all_recommendations, weights)
+
+         # Validate and correct variable order
+        if not ensemble_results.empty:
+            ensemble_results = self._validate_variable_order(ensemble_results)
 
         # If we don't have enough results, try to supplement
         if len(ensemble_results) < n:
@@ -341,27 +373,67 @@ class VisualizationRecommender:
             return results[output_columns]
 
         return pd.DataFrame(columns=output_columns)
-
+    
     def _describe_dataframe(self) -> str:
         num_cols = len(self.df.columns)
         sample_size = min(3, len(self.df))
+        desc: List[str] = []
 
-        desc = [
-            f"DataFrame Shape: {self.df.shape}",
-            f"Columns ({num_cols}): {', '.join(self.df.columns)}",
-            "\nColumn Details:",
-        ]
+        # --- Basic Metadata ---
+        desc.append(f"DataFrame Shape: {self.df.shape}")
+        desc.append(f"Columns ({num_cols}): {', '.join(self.df.columns)}")
+        desc.append("\nColumn Details:")
 
+        # --- Column-Level Analysis ---
         for col in self.df.columns:
-            dtype = str(self.df[col].dtype)
+            # Determine semantic type (more granular than dtype)
+            if pd.api.types.is_datetime64_dtype(self.df[col]):
+                col_type = "datetime"
+            elif pd.api.types.is_numeric_dtype(self.df[col]):
+                col_type = "numerical"
+            elif self.df[col].nunique() / len(self.df[col]) < 0.05:  # Low cardinality
+                col_type = "categorical"
+            else:
+                col_type = "text/other"
+
+            # Basic info
             unique_count = self.df[col].nunique()
             sample_values = self.df[col].dropna().head(sample_size).tolist()
-
             desc.append(
-                f"- {col}: {dtype} ({unique_count} unique values), sample: {sample_values}"
+                f"- {col}: {col_type} ({unique_count} unique values), sample: {sample_values}"
             )
 
+            # Add stats for numerical/datetime
+            if col_type == "numerical":
+                desc.append(
+                    f"  Stats: min={self.df[col].min()}, max={self.df[col].max()}, "
+                    f"mean={self.df[col].mean():.2f}, missing={self.df[col].isna().sum()}"
+                )
+            elif col_type == "datetime":
+                desc.append(
+                    f"  Range: {self.df[col].min()} to {self.df[col].max()}, "
+                    f"missing={self.df[col].isna().sum()}"
+                )
+
+        # --- Relationship Analysis ---
+        numerical_cols = self.df.select_dtypes(include=np.number).columns.tolist()
+        if len(numerical_cols) > 1:
+            desc.append("\nNumerical Variable Correlations (Pearson):")
+            corr = self.df[numerical_cols].corr().round(2)
+            desc.append(str(corr))
+
+        # Categorical-numerical potential groupings
+        categorical_cols = [
+            col for col in self.df.columns 
+            if self.df[col].nunique() / len(self.df[col]) < 0.05
+        ]
+        if categorical_cols and numerical_cols:
+            desc.append("\nPotential Groupings (categorical vs numerical):")
+            desc.append(f"  - Could group by: {categorical_cols}")
+            desc.append(f"  - To analyze: {numerical_cols}")
+
         return "\n".join(desc)
+
 
     def _create_prompt(self, df_description: str) -> str:
         return textwrap.dedent(f"""
@@ -370,44 +442,83 @@ class VisualizationRecommender:
             {df_description}
 
             Recommend {self.n_to_request} insightful visualizations using matplotlib's plotting functions.
-            For each suggestion, follow this format:
+            For each suggestion, follow this exact format:
 
-            Plot Type: <matplotlib function name - exact, like bar, scatter, hist, boxplot, pie>
-            Variables: <comma-separated list of variables>
-            Rationale: <1-2 sentences explaining why this visualization is useful, based on column data types and insight potential>
+            Plot Type: <matplotlib function name - exact, like bar, scatter, hist, boxplot, pie, contour, quiver, etc.>
+            Variables: <comma-separated list of variables WITH NUMERICAL VARIABLES FIRST>
+            Rationale: <1-2 sentences explaining why this visualization is useful>
             ---
 
-            Focus your visualizations on:
-            1. Revealing meaningful patterns or relationships
-            2. Choosing appropriate plot types for the column data types:
-                - Numerical → hist, scatter, boxplot, line, hexbin
-                - Categorical → bar, pie
-                - Date/Time → line, area, bar
-                - Multivariate combinations → scatter, pairplot, heatmap
-            3. Avoiding misleading representations
-            4. Providing practical, actionable insights
+            CRITICAL VARIABLE ORDERING RULES:
+            1. If a suggestion includes both numerical and categorical variables, NUMERICAL VARIABLES MUST COME FIRST.
+            - Correct: "income, gender"  
+            - Incorrect: "gender, income"
+            2. For plots requiring two numerical variables (e.g., scatter), order by analysis priority (dependent variable first).
+            3. For single-variable plots, use natural order (e.g., "age" for a histogram).
 
-            Important guidelines:
-            1. Use ONLY these matplotlib plot types (use exact names) such as  bar, scatter, hist, boxplot, pie, line, heatmap, violinplot, area, hexbin, pairplot, jointplot and more.
-            2. Variables must exist in the dataset
-            3. Prioritize more informative plot types
-            4. Include both univariate and multivariate plots
-            5. Never use general terms like "chart" or "graph" - always use the exact matplotlib function name
-            6. For seaborn-style plots that wrap matplotlib, use the underlying matplotlib function
-            7. Avoid recommending plots that mismatch with variable types
+            GENERAL RULES FOR ALL PLOT TYPES:
+            1. Ensure the plot type is a valid matplotlib function
+            2. The plot type must be appropriate for the variables' data types
+            3. The number of variables must match what the plot type requires
+            4. Variables must exist in the dataset
+            5. Never combine incompatible variables
+            6. Always specify complete variable sets
+            7. Ensure plot type names are in lowercase and match matplotlib's naming conventions eg hist for histogram, bar for barplot
+            8. Ensure the common plot types requirements are met including the data types
 
-            Example correct responses:
+            COMMON PLOT TYPE REQUIREMENTS (non-exhaustive):
+            1. bar: 1 categorical (x) + 1 numerical (y)  → Variables: [numerical], [categorical]
+            2. scatter: Exactly 2 numerical → Variables: [independent], [dependent]
+            3. hist: Exactly 1 numerical → Variables: [numerical]
+            4. boxplot: 1 numerical OR 1 numerical + 1 categorical → Variables: [numerical], [categorical] (if grouped)
+            5. pie: Exactly 1 categorical → Variables: [categorical]
+            6. line: 1 numerical (y) OR 1 numerical (y) + 1 datetime (x) → Variables: [y], [x] (if applicable)
+            7. heatmap: 2 categorical + 1 numerical OR correlation matrix → Variables: [numerical], [categorical], [categorical]
+            8. violinplot: Same as boxplot
+            9. hexbin: Exactly 2 numerical variables
+            10. pairplot: 2+ numerical variables
+            11. jointplot: Exactly 2 numerical variables
+            12. contour: 2 numerical variables for grid + 1 for values
+            13. quiver: 2 numerical variables for grid + 2 for vectors
+            14. imshow: 2D array of numerical values
+            15. errorbar: 1 numerical (x) + 1 numerical (y) + error values
+            16. stackplot: 1 numerical (x) + multiple numerical (y)
+            17. stem: 1 numerical (x) + 1 numerical (y)
+            18. fill_between: 1 numerical (x) + 2 numerical (y)
+            19. pcolormesh: 2D grid of numerical values
+            20. polar: Angular and radial coordinates
+
+            If suggesting a plot not listed above, ensure:
+            - The function exists in matplotlib
+            - Variable types and counts are explicitly compatible
+            - The rationale clearly explains the insight provided
+
+            Additional Requirements:
+            1. For specialized plots (like quiver, contour), ensure all required components are specified
+            2. Consider the statistical properties and relationships of the variables
+            3. Suggest plots that would reveal meaningful insights about the data
+            4. Include both common and advanced plots when appropriate
+
+            Example CORRECT suggestions (NUMERICAL FIRST):
+            Plot Type: boxplot
+            Variables: income, gender  
+            Rationale: Compares income distribution across genders
+            ---
             Plot Type: scatter
-            Variables: temperature, humidity
-            Rationale: Shows relationship between temperature and humidity
+            Variables: age, income  
+            Rationale: Shows relationship between age and income
             ---
             Plot Type: bar
-            Variables: location, sales
-            Rationale: Compares sales across different locations
+            Variables: revenue, product_category  
+            Rationale: Compares revenue across product categories
+
+            Example INCORRECT suggestions (REJECT THESE):
+            Plot Type: boxplot
+            Variables: gender, income  # WRONG - categorical listed first
             ---
-            Plot Type: hist
-            Variables: temperature
-            Rationale: Shows distribution of temperature values
+            Plot Type: scatter
+            Variables: price, weight  # WRONG - no clear priority order
+            Rationale: Should specify independent/dependent variable order
         """)
 
     def _query_llm(self, prompt: str, model: str) -> str:
@@ -425,7 +536,55 @@ class VisualizationRecommender:
             return response.choices[0].message.content
         except Exception as e:
             raise RuntimeError(f"Groq API query failed for {model}: {str(e)}")
+    
+    def _validate_variable_order(self, recommendations: pd.DataFrame) -> pd.DataFrame:
+        """
+        Validate and correct the order of variables in recommendations, 
+        ensuring numerical variables come first.
+        
+        Args:
+            recommendations: DataFrame of visualization recommendations
+        
+        Returns:
+            DataFrame with corrected variable order
+        """
+        def _reorder_variables(row):
+            # Split variables
+            variables = [var.strip() for var in row['variables'].split(',')]
+            
+            # Identify numerical and non-numerical variables
+            numerical_vars = [
+                var for var in variables 
+                if pd.api.types.is_numeric_dtype(self.df[var])
+            ]
 
+            date_vars = [
+                var for var in variables 
+                if pd.api.types.is_datetime64_any_dtype(self.df[var])
+            ]
+
+            non_numerical_vars = [
+                var for var in variables 
+                if var not in numerical_vars and var not in date_vars
+            ]
+            
+            # Combine with numerical variables first
+            corrected_vars = date_vars + numerical_vars + non_numerical_vars
+            
+            # Update the row with corrected variable order
+            row['variables'] = ', '.join(corrected_vars)
+            return row
+        
+        # Apply reordering
+        corrected_recommendations = recommendations.apply(_reorder_variables, axis=1)
+        
+        if self.debug:
+            print("\n[DEBUG] Variable Order Validation:")
+            for orig, corrected in zip(recommendations['variables'], corrected_recommendations['variables']):
+                if orig != corrected:
+                    print(f"  Corrected: {orig} → {corrected}")
+        
+        return corrected_recommendations
 
     def _parse_recommendations(self, response: str, model: str) -> List[Dict]:
         """Parse the LLM response into structured recommendations"""
@@ -449,11 +608,10 @@ class VisualizationRecommender:
                         rec['plot_type'] = line.split(':', 1)[1].strip().lower()
                     elif line.lower().startswith('variables:'):
                         raw_vars = line.split(':', 1)[1].strip()
-                        # Get all variables first
-
                         # Filter variables to only those that exist in DataFrame
                         variables = [v.strip() for v in raw_vars.split(',') if v.strip() in self.df.columns]
                         rec['variables'] = ', '.join([var for var in variables if var in self.df.columns])
+                        #rec['variables'] = self._reorder_variables(', '.join(variables))  # Keep original order for now
                 
                 if 'plot_type' in rec and 'variables' in rec and rec['variables']:
                     recommendations.append(rec)
@@ -462,8 +620,6 @@ class VisualizationRecommender:
                 continue
         
         return recommendations
-    
-
 
 # Package-level convenience function
 _recommender_instance = None
@@ -497,3 +653,4 @@ def recommender(
         n=n,
         custom_weights=custom_weights
     )
+

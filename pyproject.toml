@@ -4,9 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "plotsense"
-version = "0.1.0"
+version = "0.1.1"
 authors = [
     {name = "Christian Chimezie", email = "chimeziechristiancc@gmail.com"},
+    {name = "Toluwaleke Ogidan", email = "gbemilekeogidan@gmail.com"},
+    {name = "Grace Farayola", email = "gracefarayola@gmail.com"},
+    {name = "Amaka Iduwe", email = "nwaamaka_iduwe@yahoo.com"},
+    {name = "Nelson Ogbeide", email = "Ogbeide331@gmail.com"},
+    {name = "Faith Ojumah", email = "Onyekaojumah22@gmail.com"},
+    {name = "Olamilekan Ajao", email = "olamilekan011@gmail.com"}
 ]
 description = "An intelligent plotting package with suggestions and explanations"
 readme = "README.md"
@@ -31,14 +37,11 @@ dependencies = [
     "seaborn>=0.11",
     "pandas>=1.0",
     "numpy>=1.18",
-    "pytest",
     "python-dotenv",
     "groq",
     "requests",
-    "pytest-cov",
-    "pytest-mock",
-    "jupyter"
 ]
+
 
 [project.urls]
 Homepage = "https://github.com/christianchimezie/PlotSenseAI"

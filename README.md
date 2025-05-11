@@ -22,7 +22,7 @@ pip install plotsense
 
 ```bash
 import plotsense as ps
-from plotsense import recommender, generate_plot, explainer, 
+from plotsense import recommender, plotgen, explainer
 ```
 ### 🔐 Authenticate with Groq API:
 Get your free API key from Groq Cloud https://console.groq.com/home
@@ -53,7 +53,7 @@ print(suggestions)
 ```
 ### 📊 Sample Output:
 
-![alt text](suggestions_table.png)
+![alt text](image.png)
 
 🎛️ Want more suggestions?
 
@@ -61,7 +61,30 @@ print(suggestions)
 suggestions = ps.recommender(df, n=10)  
 ```
 
-### 🧾 2. AI-Powered Plot Explanation
+### 📈 2. One-Click Plot Generation
+Generate recommended charts instantly:
+
+```bash
+plot1 = ps.plotgen(df, suggestions.iloc[0]) # This will plot a bar chart with variables 'survived', 'pclass'
+plot2 = ps.plotgen(df, suggestions.iloc[1]) # This will plot a bar chart with variables 'survived', 'sex'
+plot3 = ps.plotgen(df, suggestions.iloc[2]) # This will plot a histogram with variable 'age'
+```
+🎛️ Want more control?
+
+``` bash
+plot1 = ps.plotgen(df, suggestions.iloc[0], x='pclass', y='survived') 
+```
+Supported Plots
+- scatter
+- bar
+- barh
+- histogram
+- boxplot
+- violinplot
+- pie
+- hexbin
+
+### 🧾 3. AI-Powered Plot Explanation
 Turn your visualizations into stories with natural language insights:
 
 ``` bash
@@ -74,7 +97,7 @@ print(explanation)
 - Custom Prompts: You can provide your own prompt to guide the explanation
 
 ``` bash
-explanation = refine_plot_explanation(
+explanation = explainer(
     fig,
     prompt="Explain the key trends in this sales data visualization"
 )
@@ -82,7 +105,14 @@ explanation = refine_plot_explanation(
 - Multiple Refinement Iterations: Increase the number of refinement cycles for more polished explanations:
 
 ```bash  
-explanation = refine_plot_explanation(fig, iterations=3)  # Default is 2
+explanation = explainer(fig, max_iterations=3)  # Default is 2
+```
+
+## 🔄 Combined Workflow: Suggest → Plot → Explain
+``` bash
+suggestions = ps.recommender(df)
+plot = ps.plotgen(df, suggestions.iloc[0])
+insight = ps.explainer(plot)
 ```
 
 ## 🤝 Contributing
@@ -102,6 +132,8 @@ We welcome contributions!
 - More model integrations
 - Automated insight highlighting
 - Jupyter widget support
+- Features/target analysis
+- More supported plots
 
 ### 📥 Install or Update
 ``` bash
@@ -117,3 +149,8 @@ MIT License (Open Source)
 
 Let your data speak—with clarity, power, and PlotSense.
 📊✨
+
+
+
+
+

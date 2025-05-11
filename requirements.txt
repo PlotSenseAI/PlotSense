@@ -13,4 +13,3 @@ jupyter
 matplotlib>=3.8.0
 pytest-cov
 pytest-mock
-

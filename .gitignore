@@ -1,9 +1,11 @@
 /venv
 .env
 *.env
-__pycache__
-.pytest_cache
+/__pycache__
+/.venv
 *.egg-info
 *.egg
-*.log
-.plot_explainer_cache
+*.pyc
+*.pyo
+*.pyd
+*.db
