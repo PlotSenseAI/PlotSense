@@ -1,4 +1,11 @@
 /venv
 .env
 *.env
-__pycache__
+/__pycache__
+/.venv
+*.egg-info
+*.egg
+*.pyc
+*.pyo
+*.pyd
+*.db
