@@ -65,15 +65,24 @@ suggestions = ps.recommender(df, n=10)
 Generate recommended charts instantly:
 
 ```bash
-plot1 = ps.generate_plot(df, suggestions[0]) # This will plot a bar chart with variables 'survived', 'pclass'
-plot2 = ps.generate_plot(df, suggestions[1]) # This will plot a bar chart with variables 'survived', 'sex'
-plot3 = ps.generate_plot(df, suggestions[2]) # This will plot a histogram with variable 'age'
+plot1 = ps.generate_plot(df, suggestions.iloc[0]) # This will plot a bar chart with variables 'survived', 'pclass'
+plot2 = ps.generate_plot(df, suggestions.iloc[1]) # This will plot a bar chart with variables 'survived', 'sex'
+plot3 = ps.generate_plot(df, suggestions.iloc[2]) # This will plot a histogram with variable 'age'
 ```
 🎛️ Want more control?
 
 ``` bash
-plot1 = ps.generate_plot(df, suggestions[0], x='pclass', y='survived') 
+plot1 = ps.generate_plot(df, suggestions.iloc[0], x='pclass', y='survived') 
 ```
+Supported Plots
+- scatter
+- bar
+- barh
+- hist
+- boxplot
+- violinplot
+- pie
+- hexbin
 
 ### 🧾 3. AI-Powered Plot Explanation
 Turn your visualizations into stories with natural language insights:
@@ -96,13 +105,13 @@ explanation = refine_plot_explanation(
 - Multiple Refinement Iterations: Increase the number of refinement cycles for more polished explanations:
 
 ```bash  
-explanation = refine_plot_explanation(fig, iterations=3)  # Default is 2
+explanation = refine_plot_explanation(fig, max_iterations=3)  # Default is 2
 ```
 
 ## 🔄 Combined Workflow: Suggest → Plot → Explain
 ``` bash
 suggestions = ps.recommender(df)
-plot = ps.generate_plot(df, suggestions[0])
+plot = ps.generate_plot(df, suggestions.iloc[0])
 insight = ps.explainer(plot)
 ```
 
