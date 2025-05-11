@@ -22,7 +22,7 @@ pip install plotsense
 
 ```bash
 import plotsense as ps
-from plotsense import recommender, generate_plot, explainer, 
+from plotsense import recommender, plotgen, explainer
 ```
 ### 🔐 Authenticate with Groq API:
 Get your free API key from Groq Cloud https://console.groq.com/home
@@ -65,20 +65,20 @@ suggestions = ps.recommender(df, n=10)
 Generate recommended charts instantly:
 
 ```bash
-plot1 = ps.generate_plot(df, suggestions.iloc[0]) # This will plot a bar chart with variables 'survived', 'pclass'
-plot2 = ps.generate_plot(df, suggestions.iloc[1]) # This will plot a bar chart with variables 'survived', 'sex'
-plot3 = ps.generate_plot(df, suggestions.iloc[2]) # This will plot a histogram with variable 'age'
+plot1 = ps.plotgen(df, suggestions.iloc[0]) # This will plot a bar chart with variables 'survived', 'pclass'
+plot2 = ps.plotgen(df, suggestions.iloc[1]) # This will plot a bar chart with variables 'survived', 'sex'
+plot3 = ps.plotgen(df, suggestions.iloc[2]) # This will plot a histogram with variable 'age'
 ```
 🎛️ Want more control?
 
 ``` bash
-plot1 = ps.generate_plot(df, suggestions.iloc[0], x='pclass', y='survived') 
+plot1 = ps.plotgen(df, suggestions.iloc[0], x='pclass', y='survived') 
 ```
 Supported Plots
 - scatter
 - bar
 - barh
-- hist
+- histogram
 - boxplot
 - violinplot
 - pie
@@ -97,7 +97,7 @@ print(explanation)
 - Custom Prompts: You can provide your own prompt to guide the explanation
 
 ``` bash
-explanation = refine_plot_explanation(
+explanation = explainer(
     fig,
     prompt="Explain the key trends in this sales data visualization"
 )
@@ -105,13 +105,13 @@ explanation = refine_plot_explanation(
 - Multiple Refinement Iterations: Increase the number of refinement cycles for more polished explanations:
 
 ```bash  
-explanation = refine_plot_explanation(fig, max_iterations=3)  # Default is 2
+explanation = explainer(fig, max_iterations=3)  # Default is 2
 ```
 
 ## 🔄 Combined Workflow: Suggest → Plot → Explain
 ``` bash
 suggestions = ps.recommender(df)
-plot = ps.generate_plot(df, suggestions.iloc[0])
+plot = ps.plotgen(df, suggestions.iloc[0])
 insight = ps.explainer(plot)
 ```
 
@@ -132,6 +132,8 @@ We welcome contributions!
 - More model integrations
 - Automated insight highlighting
 - Jupyter widget support
+- Features/target analysis
+- More supported plots
 
 ### 📥 Install or Update
 ``` bash
