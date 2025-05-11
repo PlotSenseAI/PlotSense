@@ -1,30 +1,47 @@
 import pytest
-import base64
-import os
-from io import BytesIO
 import matplotlib.pyplot as plt
 import numpy as np
-from unittest.mock import patch, MagicMock
+import pandas as pd
+import os
+from unittest.mock import patch, MagicMock, PropertyMock, create_autospec
+import tempfile
+from PIL import Image
 from dotenv import load_dotenv
-import warnings
-from plotsense.explanations.explanations import PlotExplainer, _explainer_instance
-import  builtins
 import matplotlib
-matplotlib.use("Agg")  # Use a non-interactive backend suitable for testing
-# Load environment variables for testing
+matplotlib.use("Agg")
 load_dotenv()
 
+# Import the class to test
+from plotsense import PlotExplainer, explainer
+
+# Test data setup
 @pytest.fixture
-def sample_plot():
-    """Fixture that creates a simple matplotlib plot"""
+def sample_data():
+    np.random.seed(42)
+    return pd.DataFrame({
+        'x': np.arange(100),
+        'y': np.random.normal(0, 1, 100),
+        'category': np.random.choice([0, 1, 2], 100)  # Numeric for color mapping
+    })
+
+@pytest.fixture
+def sample_plot(sample_data):
     fig, ax = plt.subplots()
-    x = np.linspace(0, 10, 100)
-    y = np.sin(x)
-    ax.plot(x, y)
-    ax.set_title("Sine Wave")
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    return fig
+    sample_data.plot.scatter(x='x', y='y', c='category', cmap='viridis', ax=ax)
+    return ax
+
+@pytest.fixture
+def mock_groq_completion():
+    mock_message = MagicMock()
+    type(mock_message).content = PropertyMock(return_value="Mock explanation")
+    
+    mock_choice = MagicMock()
+    mock_choice.message = mock_message
+    
+    mock_response = MagicMock()
+    mock_response.choices = [mock_choice]
+    return mock_response
+
 
 @pytest.fixture
 def mock_groq_client():
@@ -34,208 +51,343 @@ def mock_groq_client():
         mock.return_value = mock_instance
         yield mock_instance
 
+
 @pytest.fixture
-def plot_explainer():
-    """Fixture that creates a PlotExplainer instance with test config"""
-      # Replace with your actual module name
-    
-    # Use a test API key or None to test environment variable fallback
-    return PlotExplainer(api_keys={'groq': 'test-key'})
+def plot_explainer_instance(mock_groq_client):
+     # Patch the input function to return a test key
+    #with patch('builtins.input', return_value='test_key'):
+    return PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
 
-def test_initialization_with_api_keys(plot_explainer):
-    """Test initialization with API keys"""
-    assert plot_explainer.api_keys['groq'] == 'test-key'
-    assert plot_explainer.timeout == 30
+@pytest.fixture
+def simple_plot():
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [4, 5, 6])
+    yield ax
+    plt.close(fig)
 
-def test_initialization_without_api_keys():
-    """Test initialization without API keys (using environment variables)"""
-    
-    
-    # Temporarily set environment variable
-    os.environ['GROQ_API_KEY'] = 'env-test-key'
-    
-    try:
-        explainer = PlotExplainer(api_keys={})
-        assert explainer.api_keys['groq'] == 'env-test-key'
-    finally:
-        # Clean up
-        del os.environ['GROQ_API_KEY']
+@pytest.fixture
+def temp_image_path(simple_plot, tmp_path):
+    output_path = tmp_path / "test_plot.jpg"
+    simple_plot.figure.savefig(output_path)
+    return output_path
 
-def test_initialization_missing_keys():
-    """Test initialization when required keys are missing"""
-    
-    
-    with pytest.raises(ValueError, match="GROQ API key is required"):
-        PlotExplainer(api_keys={})
+class TestPlotExplainerInitialization:
+    def test_init_with_api_keys(self):
+        explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
+        assert explainer.api_keys['groq'] == 'test_key'
+        assert explainer.interactive is False
+        assert explainer.max_iterations == 3
 
-def test_plot_to_bytes_figure(sample_plot, plot_explainer):
-    """Test converting Figure to bytes"""
-    bytes_data = plot_explainer._plot_to_bytes(sample_plot)
-    assert isinstance(bytes_data, bytes)
-    assert len(bytes_data) > 0
+    def test_init_without_api_keys_interactive(self):
+        # Temporarily set environment variable
+        os.environ['GROQ_API_KEY'] = 'env-test-key'
+        try:
+            explainer = PlotExplainer(api_keys={})
+            assert explainer.api_keys['groq'] == 'env-test-key'
+        finally:
+            # Clean up
+            del os.environ['GROQ_API_KEY']
 
-def test_plot_to_bytes_axes(sample_plot, plot_explainer):
-    """Test converting Axes to bytes"""
-    bytes_data = plot_explainer._plot_to_bytes(sample_plot.axes[0])
-    assert isinstance(bytes_data, bytes)
-    assert len(bytes_data) > 0
+    def test_init_without_api_keys_non_interactive(self):
+        with pytest.raises(ValueError,  match="API key is required"):
+            PlotExplainer(api_keys={}, interactive=False)
 
-def test_select_model_rotation(plot_explainer):
-    """Test model rotation selection"""
-    models = plot_explainer._select_model_rotation()
-    assert isinstance(models, list)
-    assert len(models) > 0
+    def test_validate_keys_missing(self):
+        with pytest.raises(ValueError,  match="API key is required"):
+            PlotExplainer(api_keys={}, interactive=False)
 
-@patch('plotsense.explanations.explanations.PlotExplainer._query_llama3')
-def test_generate_explanation(mock_query, sample_plot, plot_explainer):
-    """Test explanation generation"""
-    mock_query.return_value = "Test explanation"
-    img_bytes = plot_explainer._plot_to_bytes(sample_plot)
-    explanation = plot_explainer._generate_explanation(img_bytes, "test prompt", "llama-3.2-90b-vision-preview")
-    assert explanation == "Test explanation"
-    mock_query.assert_called_once()
+    def test_initialize_clients(self, mock_groq_client):
+        explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
+        assert 'groq' in explainer.clients
+        assert explainer.clients['groq'] is not None
 
-@patch('plotsense.explanations.explanations.PlotExplainer._query_llama3')
-def test_generate_critique(mock_query, sample_plot, plot_explainer):
-    """Test critique generation"""
-    mock_query.return_value = "Test critique"
-    img_bytes = plot_explainer._plot_to_bytes(sample_plot)
-    critique = plot_explainer._generate_critique(img_bytes, "test explanation", "test prompt", "llama-3.2-90b-vision-preview")
-    assert critique == "Test critique"
-    mock_query.assert_called_once()
+    def test_detect_available_models(self, plot_explainer_instance):
+        assert len(plot_explainer_instance.available_models) > 0
+        assert all(model in PlotExplainer.DEFAULT_MODELS['groq'] 
+                  for model in plot_explainer_instance.available_models)
 
-@patch('plotsense.explanations.explanations.PlotExplainer._query_llama3')
-def test_generate_refinement(mock_query, sample_plot, plot_explainer):
-    """Test refinement generation"""
-    mock_query.return_value = "Test refinement"
-    img_bytes = plot_explainer._plot_to_bytes(sample_plot)
-    refinement = plot_explainer._generate_refinement(
-        img_bytes, "test explanation", "test critique", "test prompt", "llama-3.2-90b-vision-preview"
-    )
-    assert refinement == "Test refinement"
-    mock_query.assert_called_once()
+class TestPlotHandling:
+    def test_save_plot_to_image_figure(self, sample_plot, tmp_path):
+        explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
+        fig = sample_plot.figure
+        output_path = tmp_path / "test_figure.jpg"
+        result = explainer.save_plot_to_image(fig, str(output_path))
+        assert os.path.exists(result)
+        assert Image.open(result).format == 'JPEG'
 
-@patch('plotsense.explanations.explanations.PlotExplainer._generate_explanation')
-@patch('plotsense.explanations.explanations.PlotExplainer._generate_critique')
-@patch('plotsense.explanations.explanations.PlotExplainer._generate_refinement')
-def test_refine_plot_explanation(mock_refine, mock_critique, mock_explain, sample_plot, plot_explainer):
-    """Test the full refinement process"""
-    # Setup mock return values
-    mock_explain.return_value = "Initial explanation"
-    mock_critique.side_effect = ["Critique 1", "Critique 2"]
-    mock_refine.side_effect = ["Refined 1", "Refined 2"]
-    
-    # Test with 3 iterations (1 initial + 2 refinements)
-    result = plot_explainer.refine_plot_explanation(sample_plot, iterations=3)
-    
-    assert result == "Refined 2"
-    assert mock_explain.call_count == 1
-    assert mock_critique.call_count == 2
-    assert mock_refine.call_count == 2
+    def test_save_plot_to_image_axes(self, sample_plot, tmp_path):
+        explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
+        output_path = tmp_path / "test_axes.jpg"
+        result = explainer.save_plot_to_image(sample_plot, str(output_path))
+        assert os.path.exists(result)
+        assert Image.open(result).format == 'JPEG'
 
-def test_query_llm_success(plot_explainer, sample_plot, mock_groq_client):
-    """Test successful LLM query with proper mocking"""
-    
-    mock_completion = MagicMock()
-    mock_choice = MagicMock()
-    mock_choice.message.content = "Insight: Trend A dominates."
+    def test_encode_image(self, sample_plot, tmp_path):
+        explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
+        output_path = tmp_path / "test_encode.jpg"
+        explainer.save_plot_to_image(sample_plot, str(output_path))
+        encoded = explainer.encode_image(str(output_path))
+        assert isinstance(encoded, str)
+        assert len(encoded) > 0
 
-    mock_completion.choices = [mock_choice]
-    mock_groq_client.chat.completions.create.return_value = mock_completion
+class TestModelQuerying:
+    def test_query_model_success(self, plot_explainer_instance, mock_groq_client, temp_image_path):
+        """Test successful LLM query with proper mocking"""
+        mock_completion = MagicMock()
+        mock_choice = MagicMock()
+        mock_choice.message.content = "Insight: Trend A dominates."
+        mock_completion.choices = [mock_choice]
+        mock_groq_client.chat.completions.create.return_value = mock_completion
+        plot_explainer_instance.clients["groq"] = mock_groq_client
 
-    plot_explainer.clients["groq"] = mock_groq_client
+        model = plot_explainer_instance.available_models[0]
 
-    img_bytes = plot_explainer._plot_to_bytes(sample_plot)
-    result = plot_explainer._query_llama3(img_bytes, prompt="What's the trend?")
-    assert result == "Insight: Trend A dominates."
-    mock_groq_client.chat.completions.create.assert_called_once()
-
-
-@patch('builtins.input', return_value='test-key')
-def test_interactive_key_input(mock_input):
-    """Test interactive API key input"""
-    
-    
-    # Ensure no environment variable is set
-    if 'GROQ_API_KEY' in os.environ:
-        del os.environ['GROQ_API_KEY']
-    
-    explainer = PlotExplainer(api_keys={})
-    assert explainer.api_keys['groq'] == 'test-key'
-
-def test_invalid_iterations(sample_plot, plot_explainer):
-    """Test invalid iteration values"""
-    with pytest.raises(ValueError, match="Iterations must be between 1 and 5"):
-        plot_explainer.refine_plot_explanation(sample_plot, iterations=0)
-    
-    with pytest.raises(ValueError, match="Iterations must be between 1 and 5"):
-        plot_explainer.refine_plot_explanation(sample_plot, iterations=6)
-
-def test_module_level_explainer(sample_plot):
-    """Test the package-level convenience function"""
-    
-    # Reset the global instance
-    global _explainer_instance
-    _explainer_instance = None
-    
-    # Mock the instance methods
-    with patch('plotsense.explanations.explanations.PlotExplainer.refine_plot_explanation') as mock_method:
-        mock_method.return_value = "Test explanation"
-
-        r= PlotExplainer(api_keys={"groq": "x"})
-        _explainer_instance = r  # Manually assign to global
-
+        response = plot_explainer_instance._query_model(
+            model=model,
+            prompt="What's the trend?",
+            image_path=str(temp_image_path)
+        )
+        assert response == "Insight: Trend A dominates."
         
-        result = r.refine_plot_explanation(sample_plot)
+        # Verify the mock was called correctly
+        mock_groq_client.chat.completions.create.assert_called_once()
+
+
+    def test_query_model_invalid_model(self, plot_explainer_instance, sample_plot, tmp_path):
+        output_path = tmp_path / "test_query.jpg"
+        plot_explainer_instance.save_plot_to_image(sample_plot, str(output_path))
         
-        assert result == "Test explanation"
-        assert _explainer_instance is not None
-        mock_method.assert_called_once()
+        with pytest.raises(ValueError):
+            plot_explainer_instance._query_model(
+                model="invalid_model",
+                prompt="Test prompt",
+                image_path=str(output_path)
+            )
 
-def test_model_rotation_override(sample_plot, plot_explainer):
-    """Test custom model rotation"""
-    custom_models = ["model1", "model2"]
-    with patch.object(plot_explainer, '_generate_explanation') as mock_explain, \
-         patch.object(plot_explainer, '_generate_critique') as mock_critique, \
-         patch.object(plot_explainer, '_generate_refinement') as mock_refine:
+    def test_query_model_retry(self, plot_explainer_instance, mock_groq_client, temp_image_path):
+        # Configure the mock to fail twice then succeed
+        mock_groq_client.chat.completions.create.side_effect = [
+            Exception("503 Service Unavailable"),
+            Exception("503 Service Unavailable"),
+            MagicMock(choices=[MagicMock(message=MagicMock(content="Retry success"))])
+        ]
+        
+        mock_choice = MagicMock()
+        mock_choice.message.content = "Insight: Trend A dominates."
+        mock_completion = MagicMock()
+        mock_completion.choices = [mock_choice]
+        mock_groq_client.chat.completions.create.return_value = mock_completion
+        plot_explainer_instance.clients["groq"] = mock_groq_client
+        
+        model = plot_explainer_instance.available_models[0]
+        response = plot_explainer_instance._query_model(
+            model=model,
+            prompt="What's the trend?",
+            image_path=str(temp_image_path)
+        )
+        assert response == "Retry success"
+        assert mock_groq_client.chat.completions.create.call_count == 3
 
-        mock_explain.return_value = "Initial"
-        mock_critique.return_value = "Critique"
-        mock_refine.return_value = "Refined"
+class TestExplanationGeneration:
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_generate_initial_explanation(self,mock_query_model,plot_explainer_instance, temp_image_path):
+        """Test explanation generation"""
+        # Arrange
+        mock_query_model.return_value = "Test explanation"
+        model = plot_explainer_instance.available_models[0]
+        prompt = "Test prompt"
 
-        plot_explainer.refine_plot_explanation(
-            sample_plot,
-            iterations=2,
-            model_rotation=custom_models
+        # Act
+        explanation = plot_explainer_instance._generate_initial_explanation(
+            model=model,
+            image_path=str(temp_image_path),
+            original_prompt=prompt
         )
 
-        # Check that the methods were called with the correct models
-        # For explanation - first model
-        args, kwargs = mock_explain.call_args
-        assert len(args) >= 3  # img_bytes, prompt, model
-        assert args[2] == "model1"  # model is 3rd positional argument
+        # Assert
+        assert explanation == "Test explanation"
+        assert mock_query_model.call_count == 1
 
-        # For critique - first model
-        args, kwargs = mock_critique.call_args
-        assert len(args) >= 4  # img_bytes, explanation, prompt, model
-        assert args[3] == "model1"
+        # Verify that the prompt contains the original prompt
+        called_args, called_kwargs = mock_query_model.call_args
+        assert prompt in called_kwargs["prompt"]
+        assert called_kwargs["model"] == model
+        assert called_kwargs["image_path"] == str(temp_image_path)
 
-        # For refinement - second model
-        args, kwargs = mock_refine.call_args
-        assert len(args) >= 5  # img_bytes, explanation, critique, prompt, model
-        assert args[4] == "model2"
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_generate_critique(self,mock_query_model,plot_explainer_instance, temp_image_path):
+        """Test critique generation"""
+        mock_query_model.return_value = "Test critique"
+        model = plot_explainer_instance.available_models[0]
+        prompt = "Test prompt"
+        critique = plot_explainer_instance._generate_critique(
+            image_path=str(temp_image_path),
+            current_explanation="Test explanation",
+            original_prompt=prompt,
+            model=model
+        )
+        assert critique == "Test critique"
+        assert mock_query_model.call_count == 1
 
-def test_warning_on_missing_client():
-    """Test warning when client library is not available"""
-    with patch.dict('sys.modules', {'groq': None}):
-        with warnings.catch_warnings(record=True) as warning_list:
-            # Ensure warnings are shown
-            warnings.simplefilter("always")
-            
-            # This should trigger the warning
-            PlotExplainer(api_keys={'groq': 'test-key'})
-            
-            # Verify warning was raised
-            assert len(warning_list) == 1
-            assert "Groq Python client not installed" in str(warning_list[0].message)
-            assert warning_list[0].category == ImportWarning
+        # Verify that the prompt contains the original prompt
+        called_args, called_kwargs = mock_query_model.call_args
+        assert prompt in called_kwargs["prompt"]
+        assert called_kwargs["model"] == model
+        assert called_kwargs["image_path"] == str(temp_image_path)
+
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_generate_refinement(self,mock_query_model,plot_explainer_instance, temp_image_path):
+        """Test refinement generation"""
+        mock_query_model.return_value = "Test refinement"
+        model = plot_explainer_instance.available_models[0]
+        prompt = "Test prompt"
+        refinement = plot_explainer_instance._generate_refinement(
+            image_path=str(temp_image_path),
+            current_explanation="Test explanation",
+            critique="Test critique",
+            original_prompt=prompt,
+            model=model
+        )
+        assert refinement == "Test refinement"
+        assert mock_query_model.call_count == 1
+
+        # Verify that the prompt contains the original prompt
+        called_args, called_kwargs = mock_query_model.call_args
+        assert prompt in called_kwargs["prompt"]
+        assert called_kwargs["model"] == model
+        assert called_kwargs["image_path"] == str(temp_image_path)
+
+    @patch('plotsense.explanations.explanations.PlotExplainer._generate_initial_explanation')
+    @patch('plotsense.explanations.explanations.PlotExplainer._generate_critique')
+    @patch('plotsense.explanations.explanations.PlotExplainer._generate_refinement')
+    def test_refine_plot_explanation(self,mock_refine, mock_critique, mock_explain, sample_plot, plot_explainer_instance):
+        """Test the full refinement process"""
+        # Setup mock return values
+        mock_explain.return_value = "Initial explanation"
+        mock_critique.side_effect = ["Critique 1", "Critique 2"]
+        mock_refine.side_effect = ["Refined 1", "Refined 2"]
+
+
+        explanation =  plot_explainer_instance.refine_plot_explanation(
+            sample_plot,
+            prompt="Test prompt"
+        )
+
+        assert explanation == "Refined 2"
+        assert mock_explain.call_count == 1
+        assert mock_critique.call_count == 2
+        assert mock_refine.call_count == 2
+     
+class TestConvenienceFunction:
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_explainer_function(self, mock_query_model, simple_plot):
+        mock_query_model.return_value = "Test refinement"
+        """Test the explainer function"""
+        # Mock the query model to return a fixed response
+        mock_query_model.return_value = "Mock explanation"
+        # Call the explainer function
+      
+        result = explainer(
+            plot_object=simple_plot,
+            prompt="Test prompt",
+            api_keys={'groq': 'test_key'},
+            custom_parameters={'temperature': 0.5, 'max_tokens': 800},
+            max_iterations=2
+        )
+        assert  result == "Mock explanation"
+        assert mock_query_model.call_count >=1
+        # Verify that the prompt contains the original prompt   
+        called_args, called_kwargs = mock_query_model.call_args
+        assert "Test prompt" in called_kwargs["prompt"]
+        assert called_kwargs["model"] == "meta-llama/llama-4-maverick-17b-128e-instruct"
+        assert called_kwargs["image_path"] is not None
+
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_explainer_function_no_prompt(self, mock_query_model, simple_plot):
+        """Test the explainer function without a prompt"""
+        
+        # Mock the query model to return a fixed response
+        mock_query_model.return_value = "Mock explanation"
+        # Call the explainer function
+        result = explainer(
+            plot_object=simple_plot,
+            api_keys={'groq': 'test_key'},
+            custom_parameters={'temperature': 0.5, 'max_tokens': 800},
+            max_iterations=2
+        )
+        assert result == "Mock explanation"
+        assert mock_query_model.call_count >=1
+
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_explainer_function_singleton(self, mock_query_model, sample_plot):
+        """Test the singleton behavior of the explainer function"""
+        # Mock the query model to return a fixed response
+        mock_query_model.return_value = "Mock explanation"
+        # Call the explainer function
+
+        # First call creates instance
+        result1 = explainer(plot_object=sample_plot, api_keys={'groq': 'test_key'})
+        # Second call uses same instance
+        result2 = explainer(plot_object=sample_plot)
+        assert result1 == result2
+
+class TestExampleUsage:
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_full_workflow(self, mock_query_model, simple_plot):
+        """Test the full workflow of the PlotExplainer"""
+        # Mock the query model to return a fixed response
+        mock_query_model.return_value = "Mock explanation"
+        explanation = explainer(
+            plot_object=simple_plot,
+            prompt="Explain this line plot",
+            api_keys={'groq': 'test_key'},
+            max_iterations=2
+        )
+        assert  explanation == "Mock explanation"
+        # Verify that the mock was called with the correct prompt
+        called_args, called_kwargs = mock_query_model.call_args
+        assert "Explain this line plot" in called_kwargs["prompt"]
+        assert called_kwargs["model"] == "meta-llama/llama-4-maverick-17b-128e-instruct"
+        assert called_kwargs["image_path"] is not None
+        # Verify that the mock was called once
+        assert mock_query_model.call_count >= 1
+        # Check that the custom parameters were passed correctly
+    
+       
+    @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
+    def test_different_plot_types(self, mock_query_model):
+        """Test with different plot types"""
+        # Mock the query model to return a fixed response
+        mock_query_model.return_value = "Mock explanation"
+        # Test with line plot
+        fig1, ax1 = plt.subplots()
+        ax1.plot([1, 2, 3], [4, 5, 6])
+        explanation1 = explainer(ax1, "Explain this line plot")
+        assert explanation1 == "Mock explanation"
+        # Verify that the mock was called with the correct prompt   
+        called_args, called_kwargs = mock_query_model.call_args
+        assert "Explain this line plot" in called_kwargs["prompt"]
+        assert called_kwargs["model"] == "meta-llama/llama-4-maverick-17b-128e-instruct"
+        assert called_kwargs["image_path"] is not None
+        # Verify that the mock was called once
+        assert mock_query_model.call_count >= 1
+      
+        plt.close(fig1)
+        
+        # Test with bar plot
+        fig2, ax2 = plt.subplots()
+        ax2.bar(['A', 'B', 'C'], [3, 7, 2])
+        explanation2 = explainer(ax2, "Explain this bar plot")
+        assert explanation2 == "Mock explanation"
+        # Verify that the mock was called with the correct prompt   
+        called_args, called_kwargs = mock_query_model.call_args
+        assert "Explain this bar plot" in called_kwargs["prompt"]
+        assert called_kwargs["model"] == "meta-llama/llama-4-maverick-17b-128e-instruct"
+        assert called_kwargs["image_path"] is not None
+        # Verify that the mock was called once
+        assert mock_query_model.call_count >= 1
+        # Clean up
+        plt.close(fig2)
+
+# if __name__ == "__main__":
+#     pytest.main(["-v", "--cov=plot_explainer", "--cov-report=term-missing"])
