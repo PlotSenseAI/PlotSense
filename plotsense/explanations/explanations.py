@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from groq import Groq
 import warnings
 import builtins
-from tenacity import retry, stop_after_attempt, wait_exponential
+
 
 load_dotenv()
 
