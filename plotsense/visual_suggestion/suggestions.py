@@ -436,6 +436,8 @@ class VisualizationRecommender:
             4. Variables must exist in the dataset
             5. Never combine incompatible variables
             6. Always specify complete variable sets
+            7. Ensure plot type names are in lowercase and match matplotlib's naming conventions eg hist for histogram, bar for barplot
+            8. Ensure the common plot types requirements are met including the data types
 
             COMMON PLOT TYPE REQUIREMENTS (non-exhaustive):
             1. bar: 1 categorical (x) + 1 numerical (y)  → Variables: [numerical], [categorical]
@@ -528,13 +530,19 @@ class VisualizationRecommender:
                 var for var in variables 
                 if pd.api.types.is_numeric_dtype(self.df[var])
             ]
+
+            date_vars = [
+                var for var in variables 
+                if pd.api.types.is_datetime64_any_dtype(self.df[var])
+            ]
+
             non_numerical_vars = [
                 var for var in variables 
-                if var not in numerical_vars
+                if var not in numerical_vars and var not in date_vars
             ]
             
             # Combine with numerical variables first
-            corrected_vars = numerical_vars + non_numerical_vars
+            corrected_vars = date_vars + numerical_vars + non_numerical_vars
             
             # Update the row with corrected variable order
             row['variables'] = ', '.join(corrected_vars)
@@ -619,12 +627,12 @@ def recommender(
         custom_weights=custom_weights
     )
 
-# Example usage:
-if __name__ == "__main__":
-    import seaborn as sns
+# # Example usage:
+# if __name__ == "__main__":
+#     import seaborn as sns
     
-    # Load data
-    titanic = sns.load_dataset('titanic')
+#     # Load data
+#     titanic = sns.load_dataset('titanic')
 
-    recommendation = recommender(titanic, n=20, debug=True)
-    print(recommendation)
+#     recommendation = recommender(titanic, n=20, debug=True)
+#     print(recommendation)
