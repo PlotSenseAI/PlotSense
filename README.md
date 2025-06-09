@@ -140,7 +140,7 @@ We welcome contributions!
 pip install --upgrade plotsense  # Get the latest features!
 ```
 ## 🛡 License
-MIT License (Open Source)
+Apache License 2.0
 
 ## 🔐 API & Privacy Notes
 - Your API key is securely held in memory for your current Python session.
@@ -149,6 +149,10 @@ MIT License (Open Source)
 
 Let your data speak—with clarity, power, and PlotSense.
 📊✨
+
+## Your Feedback
+[Feedback Form](https://forms.gle/QEjipzHiMagpAQU99)
+ 
 
 
 

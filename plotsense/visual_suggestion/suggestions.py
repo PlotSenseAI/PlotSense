@@ -18,9 +18,8 @@ load_dotenv()
 class VisualizationRecommender:
     DEFAULT_MODELS = {
         'groq': [
-            ('llama3-70b-8192', 0.5),  # (model_name, weight)
-            ('mistral-saba-24b', 0.5),
-            ('llama3-8b-8192', 0.5),
+            ('llama-3.3-70b-versatile', 0.5),  # (model_name, weight)
+            ('llama-3.1-8b-instant', 0.5),
             ('llama-3.3-70b-versatile', 0.5)
         ],
         # Add other providers here
@@ -94,21 +93,6 @@ class VisualizationRecommender:
                         f"You can get it at {service_links.get(service)}"
                     )
                     
-    # def _validate_keys(self):
-    #     """Validate that required API keys are present"""
-    #     for service in ['groq']:
-    #         if not self.api_keys.get(service):
-    #             if self.interactive:
-    #                 try:
-    #                     self.api_keys[service] = builtins.input(f"Enter {service.upper()} API key: ").strip()
-    #                     if not self.api_keys[service]:
-    #                         raise ValueError(f"{service.upper()} API key is required")
-    #                 except (EOFError, OSError):
-    #                         # Handle cases where input is not available
-    #                     raise ValueError(f"{service.upper()} API key is required")
-    #             else:
-    #                 raise ValueError(f"{service.upper()} API key is required. Set it in the environment or pass it as an argument.")
-
     def _initialize_clients(self):
         """Initialize API clients"""
         self.clients = {}
