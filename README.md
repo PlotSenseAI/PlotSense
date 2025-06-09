@@ -150,6 +150,10 @@ Apache License 2.0
 Let your data speak—with clarity, power, and PlotSense.
 📊✨
 
+## Your Feedback
+[Feedback Form](https://forms.gle/QEjipzHiMagpAQU99)
+ 
+
 
 
 
