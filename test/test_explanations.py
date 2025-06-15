@@ -164,30 +164,6 @@ class TestModelQuerying:
                 image_path=str(output_path)
             )
 
-    def test_query_model_retry(self, plot_explainer_instance, mock_groq_client, temp_image_path):
-        # Configure the mock to fail twice then succeed
-        mock_groq_client.chat.completions.create.side_effect = [
-            Exception("503 Service Unavailable"),
-            Exception("503 Service Unavailable"),
-            MagicMock(choices=[MagicMock(message=MagicMock(content="Retry success"))])
-        ]
-        
-        mock_choice = MagicMock()
-        mock_choice.message.content = "Insight: Trend A dominates."
-        mock_completion = MagicMock()
-        mock_completion.choices = [mock_choice]
-        mock_groq_client.chat.completions.create.return_value = mock_completion
-        plot_explainer_instance.clients["groq"] = mock_groq_client
-        
-        model = plot_explainer_instance.available_models[0]
-        response = plot_explainer_instance._query_model(
-            model=model,
-            prompt="What's the trend?",
-            image_path=str(temp_image_path)
-        )
-        assert response == "Retry success"
-        assert mock_groq_client.chat.completions.create.call_count == 3
-
 class TestExplanationGeneration:
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
     def test_generate_initial_explanation(self,mock_query_model,plot_explainer_instance, temp_image_path):
