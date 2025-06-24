@@ -5,6 +5,7 @@
 **PlotSense** is an AI-powered assistant that helps data professionals and analysts make smarter, faster, and more explainable data visualizations. Whether you're exploring a new dataset or building dashboards, PlotSense simplifies the process with:
 
 - ✅ Smart Visualization Suggestions - Recommends the best plots based on your data structure and relationships.
+- 📊 Visualization Plot - Generates suggested plot with ease.
 - 🧠 Natural Language Explanations – Automatically explains charts in plain English.
 - 🔗 Seamless Integration – Works out of the box with pandas, matplotlib, and seaborn.
 
@@ -62,12 +63,20 @@ suggestions = ps.recommender(df, n=10)
 ```
 
 ### 📈 2. One-Click Plot Generation
-Generate recommended charts instantly:
+Generate recommended charts instantly using .iloc
 
 ```bash
 plot1 = ps.plotgen(df, suggestions.iloc[0]) # This will plot a bar chart with variables 'survived', 'pclass'
 plot2 = ps.plotgen(df, suggestions.iloc[1]) # This will plot a bar chart with variables 'survived', 'sex'
 plot3 = ps.plotgen(df, suggestions.iloc[2]) # This will plot a histogram with variable 'age'
+```
+
+or Generate recommended charts instantly using three argurments
+
+```bash
+plot1 = ps.plotgen(df, 0, suggestions) # This will plot a bar chart with variables 'survived', 'pclass'
+plot2 = ps.plotgen(df, 1, suggestions) # This will plot a bar chart with variables 'survived', 'sex'
+plot3 = ps.plotgen(df, 2, suggestions) # This will plot a histogram with variable 'age'
 ```
 🎛️ Want more control?
 
@@ -134,6 +143,8 @@ We welcome contributions!
 - Jupyter widget support
 - Features/target analysis
 - More supported plots
+- PlotSense web interface
+- PlotSense customised notebook template
 
 ### 📥 Install or Update
 ``` bash
