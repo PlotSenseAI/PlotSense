@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="plotsense",
-    version="0.1.2",
+    version="0.1.3",
     author="Christian Chimezie, Toluwaleke Ogidan, Grace Farayola, Amaka Iduwe, Nelson Ogbeide, Onyekachukwu Ojumah, Olamilekan Ajao",
     author_email="chimeziechristiancc@gmail.com, gbemilekeogidan@gmail.com, gracefarayola@gmail.com, nwaamaka_iduwe@yahoo.com, Ogbeide331@gmail.com, Onyekaojumah22@gmail.com, olamilekan011@gmail.com",
     description="An intelligent plotting package with suggestions and explanations",
