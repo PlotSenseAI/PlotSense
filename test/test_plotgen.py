@@ -1,18 +1,19 @@
+from plotsense.plot_generator.generator import PlotGenerator, SmartPlotGenerator, plotgen
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Use non-interactive backend for all tests to avoid Tkinter issues
 matplotlib.use('Agg')
 
 # SUT
-from plotsense.plot_generator.generator import PlotGenerator, SmartPlotGenerator, plotgen
 
 # Fixtures
+
+
 @pytest.fixture
 def sample_dataframe():
     """Ensure numeric columns have proper values for aggregation"""
@@ -30,6 +31,7 @@ def sample_dataframe():
         "z": np.random.rand(n),
     })
 
+
 @pytest.fixture
 def sample_suggestions():
     """Modified to use numeric columns for bar/barh plots"""
@@ -40,10 +42,12 @@ def sample_suggestions():
         'ensemble_score': np.random.rand(8)
     })
 
+
 @pytest.fixture
 def plot_generator(sample_dataframe, sample_suggestions):
     """Fixture for PlotGenerator instance."""
     return PlotGenerator(sample_dataframe, sample_suggestions)
+
 
 @pytest.fixture
 def smart_plot_generator(sample_dataframe, sample_suggestions):
@@ -51,6 +55,8 @@ def smart_plot_generator(sample_dataframe, sample_suggestions):
     return SmartPlotGenerator(sample_dataframe, sample_suggestions)
 
 # Reset global state before each test to avoid interference
+
+
 @pytest.fixture(autouse=True)
 def reset_plot_generator_instance():
     """Reset the global _plot_generator_instance before each test."""
@@ -58,6 +64,8 @@ def reset_plot_generator_instance():
     _plot_generator_instance = None
 
 # Unit Tests
+
+
 class TestPlotGeneratorUnit:
     def test_init_plot_generator(self, sample_dataframe, sample_suggestions):
         pg = PlotGenerator(sample_dataframe, sample_suggestions)
@@ -89,6 +97,8 @@ class TestPlotGeneratorUnit:
         plt.close(fig)
 
 # Unit Tests for Individual Plot Functions
+
+
 class TestPlotFunctions:
     def test_create_scatter(self, plot_generator):
         fig = plot_generator._create_scatter(["x", "y"])
@@ -141,18 +151,22 @@ class TestPlotFunctions:
         plt.close(fig)
 
 # Integration Tests
+
+
 class TestPlotGeneratorIntegration:
     def test_plotgen_with_custom_args(self, sample_dataframe, sample_suggestions):
         # Mock the generate_plot method to test custom args
         with patch.object(PlotGenerator, 'generate_plot') as mock_generate:
             mock_generate.return_value = plt.figure()
-            fig = plotgen(sample_dataframe, 0, sample_suggestions, 
-                         x_label="Custom X", y_label="Custom Y", title="Custom Title")
+            fig = plotgen(sample_dataframe, 0, sample_suggestions,
+                          x_label="Custom X", y_label="Custom Y", title="Custom Title")
             assert isinstance(fig, plt.Figure)
             mock_generate.assert_called_once_with(0, x_label="Custom X", y_label="Custom Y", title="Custom Title")
         plt.close(fig)
 
 # End-to-End Tests
+
+
 class TestPlotGeneratorEndToEnd:
     @pytest.mark.parametrize("index", range(8))  # All plot types
     def test_all_plot_types_default(self, sample_dataframe, sample_suggestions, index):
@@ -183,6 +197,8 @@ class TestPlotGeneratorEndToEnd:
         plt.close(fig)
 
 # Error Handling Tests
+
+
 class TestPlotGeneratorErrorHandling:
     def test_plotgen_empty_variables(self, sample_dataframe):
         """Test with empty variables that will trigger the scatter validation error"""
@@ -201,12 +217,12 @@ class TestPlotGeneratorErrorHandling:
             'variables': ['x,y'],
             'ensemble_score': [0.9]
         })
-        
+
         result = plotgen(sample_dataframe, 0, invalid_suggestions)
-        
+
         # Either returns None or a figure with error indication
         assert result is None or isinstance(result, plt.Figure)
-        
+
         if isinstance(result, plt.Figure):
             plt.close(result)
 
@@ -240,6 +256,8 @@ class TestPlotGeneratorErrorHandling:
         assert fig is not None
 
 # Edge Case Tests
+
+
 class TestPlotGeneratorEdgeCases:
     def test_empty_dataframe(self):
         with pytest.raises(ValueError):
@@ -261,7 +279,7 @@ class TestPlotGeneratorEdgeCases:
         df = sample_dataframe.copy()
         if 'y' not in df.columns:
             df['y'] = np.random.rand(len(df))
-        
+
         sugg = pd.DataFrame({
             'plot_type': ['scatter'],
             'variables': ['x,y'],

@@ -23,7 +23,7 @@ class VisualizationRecommender:
             ('llama-3.1-8b-instant', 0.5)
 
         ],
-        
+
     }
 
     def __init__(self,
@@ -275,7 +275,7 @@ class VisualizationRecommender:
 
         model_handlers = {
             'llama': self._query_llm
-            
+
             # Add other model handlers here
         }
 
