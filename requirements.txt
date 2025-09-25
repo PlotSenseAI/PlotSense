@@ -1,16 +1,10 @@
-# This file is used to install the required packages for the project.
-seaborn
-matplotlib
-pandas
+# binder requirements for plotsense demo
+seaborn>=0.11
+pandas>=1.0
 numpy
-pytest
-python-dotenv
-ipykernel
-groq
-requests
-setuptools
+scipy
+scikit-learn
 jupyter
-matplotlib>=3.8.0
 pytest-cov
 pytest-mock
 flake8
