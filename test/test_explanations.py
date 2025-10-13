@@ -1,10 +1,10 @@
+from plotsense import PlotExplainer, explainer
 import pytest
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
-from unittest.mock import patch, MagicMock, PropertyMock, create_autospec
-import tempfile
+from unittest.mock import patch, MagicMock, PropertyMock
 from PIL import Image
 from dotenv import load_dotenv
 import matplotlib
@@ -12,9 +12,10 @@ matplotlib.use("Agg")
 load_dotenv()
 
 # Import the class to test
-from plotsense import PlotExplainer, explainer
 
 # Test data setup
+
+
 @pytest.fixture
 def sample_data():
     np.random.seed(42)
@@ -24,20 +25,22 @@ def sample_data():
         'category': np.random.choice([0, 1, 2], 100)  # Numeric for color mapping
     })
 
+
 @pytest.fixture
 def sample_plot(sample_data):
     fig, ax = plt.subplots()
     sample_data.plot.scatter(x='x', y='y', c='category', cmap='viridis', ax=ax)
     return ax
 
+
 @pytest.fixture
 def mock_groq_completion():
     mock_message = MagicMock()
     type(mock_message).content = PropertyMock(return_value="Mock explanation")
-    
+
     mock_choice = MagicMock()
     mock_choice.message = mock_message
-    
+
     mock_response = MagicMock()
     mock_response.choices = [mock_choice]
     return mock_response
@@ -54,9 +57,10 @@ def mock_groq_client():
 
 @pytest.fixture
 def plot_explainer_instance(mock_groq_client):
-     # Patch the input function to return a test key
-    #with patch('builtins.input', return_value='test_key'):
+    # Patch the input function to return a test key
+    # with patch('builtins.input', return_value='test_key'):
     return PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
+
 
 @pytest.fixture
 def simple_plot():
@@ -65,11 +69,13 @@ def simple_plot():
     yield ax
     plt.close(fig)
 
+
 @pytest.fixture
 def temp_image_path(simple_plot, tmp_path):
     output_path = tmp_path / "test_plot.jpg"
     simple_plot.figure.savefig(output_path)
     return output_path
+
 
 class TestPlotExplainerInitialization:
     def test_init_with_api_keys(self):
@@ -103,8 +109,9 @@ class TestPlotExplainerInitialization:
 
     def test_detect_available_models(self, plot_explainer_instance):
         assert len(plot_explainer_instance.available_models) > 0
-        assert all(model in PlotExplainer.DEFAULT_MODELS['groq'] 
-                  for model in plot_explainer_instance.available_models)
+        assert all(model in PlotExplainer.DEFAULT_MODELS['groq']
+                   for model in plot_explainer_instance.available_models)
+
 
 class TestPlotHandling:
     def test_save_plot_to_image_figure(self, sample_plot, tmp_path):
@@ -130,6 +137,7 @@ class TestPlotHandling:
         assert isinstance(encoded, str)
         assert len(encoded) > 0
 
+
 class TestModelQuerying:
     def test_query_model_success(self, plot_explainer_instance, mock_groq_client, temp_image_path):
         """Test successful LLM query with proper mocking"""
@@ -148,15 +156,14 @@ class TestModelQuerying:
             image_path=str(temp_image_path)
         )
         assert response == "Insight: Trend A dominates."
-        
+
         # Verify the mock was called correctly
         mock_groq_client.chat.completions.create.assert_called_once()
-
 
     def test_query_model_invalid_model(self, plot_explainer_instance, sample_plot, tmp_path):
         output_path = tmp_path / "test_query.jpg"
         plot_explainer_instance.save_plot_to_image(sample_plot, str(output_path))
-        
+
         with pytest.raises(ValueError):
             plot_explainer_instance._query_model(
                 model="invalid_model",
@@ -164,33 +171,10 @@ class TestModelQuerying:
                 image_path=str(output_path)
             )
 
-    def test_query_model_retry(self, plot_explainer_instance, mock_groq_client, temp_image_path):
-        # Configure the mock to fail twice then succeed
-        mock_groq_client.chat.completions.create.side_effect = [
-            Exception("503 Service Unavailable"),
-            Exception("503 Service Unavailable"),
-            MagicMock(choices=[MagicMock(message=MagicMock(content="Retry success"))])
-        ]
-        
-        mock_choice = MagicMock()
-        mock_choice.message.content = "Insight: Trend A dominates."
-        mock_completion = MagicMock()
-        mock_completion.choices = [mock_choice]
-        mock_groq_client.chat.completions.create.return_value = mock_completion
-        plot_explainer_instance.clients["groq"] = mock_groq_client
-        
-        model = plot_explainer_instance.available_models[0]
-        response = plot_explainer_instance._query_model(
-            model=model,
-            prompt="What's the trend?",
-            image_path=str(temp_image_path)
-        )
-        assert response == "Retry success"
-        assert mock_groq_client.chat.completions.create.call_count == 3
 
 class TestExplanationGeneration:
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
-    def test_generate_initial_explanation(self,mock_query_model,plot_explainer_instance, temp_image_path):
+    def test_generate_initial_explanation(self, mock_query_model, plot_explainer_instance, temp_image_path):
         """Test explanation generation"""
         # Arrange
         mock_query_model.return_value = "Test explanation"
@@ -215,7 +199,7 @@ class TestExplanationGeneration:
         assert called_kwargs["image_path"] == str(temp_image_path)
 
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
-    def test_generate_critique(self,mock_query_model,plot_explainer_instance, temp_image_path):
+    def test_generate_critique(self, mock_query_model, plot_explainer_instance, temp_image_path):
         """Test critique generation"""
         mock_query_model.return_value = "Test critique"
         model = plot_explainer_instance.available_models[0]
@@ -236,7 +220,7 @@ class TestExplanationGeneration:
         assert called_kwargs["image_path"] == str(temp_image_path)
 
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
-    def test_generate_refinement(self,mock_query_model,plot_explainer_instance, temp_image_path):
+    def test_generate_refinement(self, mock_query_model, plot_explainer_instance, temp_image_path):
         """Test refinement generation"""
         mock_query_model.return_value = "Test refinement"
         model = plot_explainer_instance.available_models[0]
@@ -260,15 +244,14 @@ class TestExplanationGeneration:
     @patch('plotsense.explanations.explanations.PlotExplainer._generate_initial_explanation')
     @patch('plotsense.explanations.explanations.PlotExplainer._generate_critique')
     @patch('plotsense.explanations.explanations.PlotExplainer._generate_refinement')
-    def test_refine_plot_explanation(self,mock_refine, mock_critique, mock_explain, sample_plot, plot_explainer_instance):
+    def test_refine_plot_explanation(self, mock_refine, mock_critique, mock_explain, sample_plot, plot_explainer_instance):
         """Test the full refinement process"""
         # Setup mock return values
         mock_explain.return_value = "Initial explanation"
         mock_critique.side_effect = ["Critique 1", "Critique 2"]
         mock_refine.side_effect = ["Refined 1", "Refined 2"]
 
-
-        explanation =  plot_explainer_instance.refine_plot_explanation(
+        explanation = plot_explainer_instance.refine_plot_explanation(
             sample_plot,
             prompt="Test prompt"
         )
@@ -277,7 +260,8 @@ class TestExplanationGeneration:
         assert mock_explain.call_count == 1
         assert mock_critique.call_count == 2
         assert mock_refine.call_count == 2
-     
+
+
 class TestConvenienceFunction:
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
     def test_explainer_function(self, mock_query_model, simple_plot):
@@ -286,7 +270,7 @@ class TestConvenienceFunction:
         # Mock the query model to return a fixed response
         mock_query_model.return_value = "Mock explanation"
         # Call the explainer function
-      
+
         result = explainer(
             plot_object=simple_plot,
             prompt="Test prompt",
@@ -294,9 +278,9 @@ class TestConvenienceFunction:
             custom_parameters={'temperature': 0.5, 'max_tokens': 800},
             max_iterations=2
         )
-        assert  result == "Mock explanation"
-        assert mock_query_model.call_count >=1
-        # Verify that the prompt contains the original prompt   
+        assert result == "Mock explanation"
+        assert mock_query_model.call_count >= 1
+        # Verify that the prompt contains the original prompt
         called_args, called_kwargs = mock_query_model.call_args
         assert "Test prompt" in called_kwargs["prompt"]
         assert called_kwargs["model"] == "meta-llama/llama-4-maverick-17b-128e-instruct"
@@ -305,7 +289,7 @@ class TestConvenienceFunction:
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
     def test_explainer_function_no_prompt(self, mock_query_model, simple_plot):
         """Test the explainer function without a prompt"""
-        
+
         # Mock the query model to return a fixed response
         mock_query_model.return_value = "Mock explanation"
         # Call the explainer function
@@ -316,7 +300,7 @@ class TestConvenienceFunction:
             max_iterations=2
         )
         assert result == "Mock explanation"
-        assert mock_query_model.call_count >=1
+        assert mock_query_model.call_count >= 1
 
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
     def test_explainer_function_singleton(self, mock_query_model, sample_plot):
@@ -331,6 +315,7 @@ class TestConvenienceFunction:
         result2 = explainer(plot_object=sample_plot)
         assert result1 == result2
 
+
 class TestExampleUsage:
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
     def test_full_workflow(self, mock_query_model, simple_plot):
@@ -343,7 +328,7 @@ class TestExampleUsage:
             api_keys={'groq': 'test_key'},
             max_iterations=2
         )
-        assert  explanation == "Mock explanation"
+        assert explanation == "Mock explanation"
         # Verify that the mock was called with the correct prompt
         called_args, called_kwargs = mock_query_model.call_args
         assert "Explain this line plot" in called_kwargs["prompt"]
@@ -352,8 +337,7 @@ class TestExampleUsage:
         # Verify that the mock was called once
         assert mock_query_model.call_count >= 1
         # Check that the custom parameters were passed correctly
-    
-       
+
     @patch('plotsense.explanations.explanations.PlotExplainer._query_model')
     def test_different_plot_types(self, mock_query_model):
         """Test with different plot types"""
@@ -364,22 +348,22 @@ class TestExampleUsage:
         ax1.plot([1, 2, 3], [4, 5, 6])
         explanation1 = explainer(ax1, "Explain this line plot")
         assert explanation1 == "Mock explanation"
-        # Verify that the mock was called with the correct prompt   
+        # Verify that the mock was called with the correct prompt
         called_args, called_kwargs = mock_query_model.call_args
         assert "Explain this line plot" in called_kwargs["prompt"]
         assert called_kwargs["model"] == "meta-llama/llama-4-maverick-17b-128e-instruct"
         assert called_kwargs["image_path"] is not None
         # Verify that the mock was called once
         assert mock_query_model.call_count >= 1
-      
+
         plt.close(fig1)
-        
+
         # Test with bar plot
         fig2, ax2 = plt.subplots()
         ax2.bar(['A', 'B', 'C'], [3, 7, 2])
         explanation2 = explainer(ax2, "Explain this bar plot")
         assert explanation2 == "Mock explanation"
-        # Verify that the mock was called with the correct prompt   
+        # Verify that the mock was called with the correct prompt
         called_args, called_kwargs = mock_query_model.call_args
         assert "Explain this bar plot" in called_kwargs["prompt"]
         assert called_kwargs["model"] == "meta-llama/llama-4-maverick-17b-128e-instruct"

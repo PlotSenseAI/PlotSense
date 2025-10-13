@@ -9,3 +9,7 @@ numpy
 scipy
 scikit-learn
 jupyter
+pytest-cov
+pytest-mock
+flake8
+autopep8

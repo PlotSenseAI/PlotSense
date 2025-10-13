@@ -5,6 +5,7 @@
 **PlotSense** is an AI-powered assistant that helps data professionals and analysts make smarter, faster, and more explainable data visualizations. Whether you're exploring a new dataset or building dashboards, PlotSense simplifies the process with:
 
 - ✅ Smart Visualization Suggestions - Recommends the best plots based on your data structure and relationships.
+- 📊 Visualization Plot - Generates suggested plot with ease.
 - 🧠 Natural Language Explanations – Automatically explains charts in plain English.
 - 🔗 Seamless Integration – Works out of the box with pandas, matplotlib, and seaborn.
 
@@ -48,7 +49,7 @@ import pandas as pd
 df = pd.read_csv("data.csv")
 
 # Get AI-recommended visualizations
-suggestions = ps.recommender(df) # default number of suggestions is 5
+suggestions = recommender(df) # default number of suggestions is 5
 print(suggestions)
 ```
 ### 📊 Sample Output:
@@ -58,21 +59,29 @@ print(suggestions)
 🎛️ Want more suggestions?
 
 ``` bash
-suggestions = ps.recommender(df, n=10)  
+suggestions = recommender(df, n=10)  
 ```
 
 ### 📈 2. One-Click Plot Generation
-Generate recommended charts instantly:
+Generate recommended charts instantly using .iloc
 
 ```bash
-plot1 = ps.plotgen(df, suggestions.iloc[0]) # This will plot a bar chart with variables 'survived', 'pclass'
-plot2 = ps.plotgen(df, suggestions.iloc[1]) # This will plot a bar chart with variables 'survived', 'sex'
-plot3 = ps.plotgen(df, suggestions.iloc[2]) # This will plot a histogram with variable 'age'
+plot1 = plotgen(df, suggestions.iloc[0]) # This will plot a bar chart with variables 'survived', 'pclass'
+plot2 = plotgen(df, suggestions.iloc[1]) # This will plot a bar chart with variables 'survived', 'sex'
+plot3 = plotgen(df, suggestions.iloc[2]) # This will plot a histogram with variable 'age'
+```
+
+or Generate recommended charts instantly using three argurments
+
+```bash
+plot1 = plotgen(df, 0, suggestions) # This will plot a bar chart with variables 'survived', 'pclass'
+plot2 = plotgen(df, 1, suggestions) # This will plot a bar chart with variables 'survived', 'sex'
+plot3 = plotgen(df, 2, suggestions) # This will plot a histogram with variable 'age'
 ```
 🎛️ Want more control?
 
 ``` bash
-plot1 = ps.plotgen(df, suggestions.iloc[0], x='pclass', y='survived') 
+plot1 = plotgen(df, suggestions.iloc[0], x='pclass', y='survived') 
 ```
 Supported Plots
 - scatter
@@ -88,7 +97,7 @@ Supported Plots
 Turn your visualizations into stories with natural language insights:
 
 ``` bash
-explanation = ps.explainer(plot1)
+explanation = explainer(plot1)
 
 print(explanation)
 ```
@@ -110,9 +119,9 @@ explanation = explainer(fig, max_iterations=3)  # Default is 2
 
 ## 🔄 Combined Workflow: Suggest → Plot → Explain
 ``` bash
-suggestions = ps.recommender(df)
-plot = ps.plotgen(df, suggestions.iloc[0])
-insight = ps.explainer(plot)
+suggestions = recommender(df)
+plot = plotgen(df, suggestions.iloc[0])
+insight = explainer(plot)
 ```
 
 ## 🤝 Contributing
@@ -134,6 +143,8 @@ We welcome contributions!
 - Jupyter widget support
 - Features/target analysis
 - More supported plots
+- PlotSense web interface
+- PlotSense customised notebook template
 
 ### 📥 Install or Update
 ``` bash
