@@ -30,6 +30,11 @@ export const env = {
     mode: import.meta.env.VITE_DEV_MODE === 'true',
     logLevel: import.meta.env.VITE_LOG_LEVEL || 'info',
   },
+
+  //analytics configuration
+  analytics: {
+    gaId: import.meta.env.VITE_GA_ID || '',
+  },
 } as const;
 
 //validate required environment variables
