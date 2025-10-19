@@ -2,8 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import List, Dict, Any, Optional, Union
-import os, importlib
-
 
 
 class PlotGenerator:
@@ -33,8 +31,6 @@ class PlotGenerator:
         self.data = data.copy()
         self.suggestions = suggestions
         self.plot_functions = self._initialize_plot_functions()
-
-        self._load_plugins()
         
     def generate_plot(self, suggestion_index: int, **kwargs) -> plt.Figure:
         """
@@ -68,14 +64,7 @@ class PlotGenerator:
         
         suggestion = self.suggestions.iloc[suggestion_index]
         plot_type = suggestion['plot_type'].lower()
-        vars_value = suggestion['variables']
-        if isinstance(vars_value, str):
-            variables = [v.strip() for v in vars_value.split(',') if v.strip()]
-        elif isinstance(vars_value, list):
-            variables = vars_value
-        else:
-            variables = []
-
+        variables = [v.strip() for v in suggestion['variables'].split(',')]
         
         if plot_type not in self.plot_functions:
             print(f"This version of PlotSense does not support plot type: {plot_type}")
@@ -100,6 +89,7 @@ class PlotGenerator:
             # Specialized plots
             'pie': self._create_pie,
             'hexbin': self._create_hexbin
+            
              }
    
 
@@ -256,44 +246,6 @@ class PlotGenerator:
             ax.set_xlabel(variables[0])
         if len(variables) > 1:
             ax.set_ylabel(variables[1])
-
-
-    def register_plot_callable(self, plot_name: str, func: callable):
-        """
-        Allow external plugins to register new plot functions.
-        Example: register_plot_callable("heatmap", heatmap_function)
-        """
-        if not callable(func):
-            raise TypeError("func must be callable")
-        self.plot_functions[plot_name] = func
-
-    def _load_plugins(self, plugins_dir: str = "plugins"):
-        """
-        Load external plot plugins from the given directory.
-        Each plugin must define a `get_plots()` function that returns
-        a dict like {"plot_name": plot_function}.
-        """
-        print("Loading plugins…")
-        if not os.path.exists(plugins_dir):
-            return  # No plugins folder yet
-
-        for fname in os.listdir(plugins_dir):
-            if fname.endswith(".py") and not fname.startswith("__"):
-                module_name = fname[:-3]  # strip .py
-                module_path = f"{plugins_dir}.{module_name}"
-
-                try:
-                    plugin = importlib.import_module(module_path)
-                    if hasattr(plugin, "get_plots"):
-                        new_plots = plugin.get_plots()
-                        if isinstance(new_plots, dict):
-                            for name, func in new_plots.items():
-                                def wrapped_func(variables, func=func, **kwargs):
-                                    return func(self.data, variables, **kwargs)
-                                self.register_plot_callable(name, wrapped_func)
-                except Exception as e:
-                    print(f"Failed to load plugin {module_name}: {e}")
-
 
 class SmartPlotGenerator(PlotGenerator):
     def _create_box(self, variables: List[str], **kwargs) -> plt.Figure:
@@ -609,3 +561,4 @@ def plotgen(
         return _plot_generator_instance.generate_plot(suggestion, **plot_kwargs)
     # else:
     #     raise TypeError("suggestion must be either an integer index or a pandas Series")
+
