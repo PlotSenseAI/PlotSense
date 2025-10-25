@@ -19,7 +19,7 @@ export const isValidFileSize = (size: number, maxSize: number): boolean => {
 
 export const isValidFileType = (file: File, allowedTypes: string[]): boolean => {
   const fileExtension = `.${file.name.split('.').pop()?.toLowerCase()}`;
-  return allowedTypes.includes(fileExtension) || 
+  return allowedTypes.includes(fileExtension) ||
          allowedTypes.includes(file.type);
 };
 

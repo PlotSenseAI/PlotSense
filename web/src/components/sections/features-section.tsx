@@ -84,15 +84,15 @@ const FeaturesSection: React.FC = () => {
             <span className="block text-blue-600 dark:text-blue-400">data visualization</span>
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            from data upload to insight generation, plotsense provides all the tools you need 
+            from data upload to insight generation, plotsense provides all the tools you need
             to create compelling visualizations that tell your data's story.
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card 
-              key={index} 
+            <Card
+              key={index}
               className="group hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 animate-fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
@@ -102,7 +102,7 @@ const FeaturesSection: React.FC = () => {
                   <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-r ${feature.color} text-white group-hover:scale-110 transition-transform duration-300`}>
                     {feature.icon}
                   </div>
-                  
+
                   {/* content */}
                   <div className="space-y-3">
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 capitalize">

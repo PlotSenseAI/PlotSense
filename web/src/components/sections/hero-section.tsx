@@ -16,7 +16,7 @@ const HeroSection: React.FC = () => {
       <Container className="relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* hero content */}
-          <motion.div 
+          <motion.div
             className="text-gray-900 dark:text-white space-y-8"
             initial={{ opacity: 0, rotateX: -15 }}
             animate={{ opacity: 1, rotateX: 0 }}
@@ -26,7 +26,7 @@ const HeroSection: React.FC = () => {
               <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/30 backdrop-blur-sm border border-blue-200 dark:border-blue-700">
                 <span className="text-sm font-medium text-blue-700 dark:text-blue-300">ai-powered data visualization</span>
               </div>
-              
+
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight">
                 intelligent
                 <span className="block text-blue-600 dark:text-blue-400">
@@ -34,7 +34,7 @@ const HeroSection: React.FC = () => {
                 </span>
                 for python
               </h1>
-              
+
               <p className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
                 ai-powered python package that analyzes your pandas dataframes and provides smart visualization recommendations, one-click plot generation, and natural language explanations.
               </p>
@@ -42,8 +42,8 @@ const HeroSection: React.FC = () => {
 
             {/* cta buttons */}
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 font-semibold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-xl"
                 onClick={() => window.open(EXTERNAL_LINKS.BINDER_DEMO + '?utm_source=website&utm_medium=hero_button&utm_campaign=try_demo', '_blank')}
               >
@@ -52,9 +52,9 @@ const HeroSection: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2M7 17l3-3m0 0l3-3m-3 3h12" />
                 </svg>
               </Button>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 size="lg"
                 className="border-gray-300 dark:border-gray-600 bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg"
                 onClick={() => window.open(EXTERNAL_LINKS.GITHUB_REPO + '?utm_source=website&utm_medium=hero_button&utm_campaign=view_docs', '_blank')}
@@ -69,7 +69,7 @@ const HeroSection: React.FC = () => {
           </motion.div>
 
           {/* hero visual */}
-          <motion.div 
+          <motion.div
             className="relative"
             initial={{ opacity: 0, scale: 0.8, rotateY: 15 }}
             animate={{ opacity: 1, scale: 1, rotateY: 0 }}
@@ -83,20 +83,20 @@ const HeroSection: React.FC = () => {
                   <div className="h-3 w-3 rounded-full bg-yellow-400"></div>
                   <div className="h-3 w-3 rounded-full bg-green-400"></div>
                 </div>
-                
+
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 space-y-3 border border-gray-200 dark:border-gray-600">
                   <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Sample PlotSense Output</div>
                   <div className="rounded-lg overflow-hidden w-full">
-                    <img 
-                      src="/plots/bar_plot.png" 
-                      alt="PlotSense generated bar chart" 
+                    <img
+                      src="/plots/bar_plot.png"
+                      alt="PlotSense generated bar chart"
                       className="w-full h-auto max-w-full max-h-48 object-contain bg-white rounded-lg"
                     />
                   </div>
                 </div>
               </div>
             </div>
-            
+
             {/* floating elements */}
             <div className="absolute -top-8 -right-8 w-16 h-16 bg-yellow-300/80 rounded-full flex items-center justify-center shadow-lg animate-float">
               <svg className="h-8 w-8 text-yellow-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">

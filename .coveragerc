@@ -1,0 +1,92 @@
+# Coverage.py configuration file
+# https://coverage.readthedocs.io/
+
+[run]
+# Measure branch coverage in addition to statement coverage
+branch = True
+
+# Source directories to measure
+source = plotsense
+
+# Files to omit from coverage
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.venv/*
+    setup.py
+    */site-packages/*
+
+# Parallel mode for running tests in parallel
+parallel = False
+
+[report]
+# Precision for coverage percentage
+precision = 2
+
+# Show lines that weren't executed
+show_missing = True
+
+# Don't skip covered files in the report
+skip_covered = False
+
+# Skip files with no statements
+skip_empty = True
+
+# Sort report by coverage percentage
+sort = Cover
+
+# Fail if coverage is below this percentage (can be overridden in CI)
+# fail_under = 80
+
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+    def __str__
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    raise ValueError
+
+    # Don't complain if non-runnable code isn't run:
+    if __name__ == .__main__.:
+    if 0:
+    if False:
+
+    # Type checking only code
+    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
+
+    # Abstract methods
+    @abstractmethod
+    @abc.abstractmethod
+
+    # Overloaded functions
+    @overload
+
+    # Protocol methods
+    @protocol
+    \.\.\.
+
+[html]
+# Directory for HTML report
+directory = htmlcov
+
+# Title for HTML report
+title = PlotSense Test Coverage Report
+
+[xml]
+# Output file for XML report (for CI/CD tools)
+output = coverage.xml
+
+[json]
+# Output file for JSON report
+output = coverage.json
+show_contexts = True
