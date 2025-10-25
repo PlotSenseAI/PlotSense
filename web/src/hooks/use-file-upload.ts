@@ -64,7 +64,7 @@ export const useFileUpload = <T>(options: UseFileUploadOptions = {}) => {
       }, 100);
 
       const response = await apiClient.upload<T>(endpoint, file);
-      
+
       clearInterval(progressInterval);
       setProgress(100);
 
@@ -80,7 +80,7 @@ export const useFileUpload = <T>(options: UseFileUploadOptions = {}) => {
       const errorMessage = err instanceof Error ? err.message : 'upload failed';
       setError(errorMessage);
       onError?.(errorMessage);
-      
+
       return {
         success: false,
         data: null as T,

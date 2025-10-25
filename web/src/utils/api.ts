@@ -37,9 +37,9 @@ const createApiClient = () => {
         };
       } catch (error) {
         clearTimeout(timeoutId);
-        
+
         const message = error instanceof Error ? error.message : 'unknown error';
-        
+
         return {
           success: false,
           data: null as T,

@@ -1,0 +1,55 @@
+name: Frontend Tests
+
+on:
+  push:
+    branches: [ main, dev, 'feature/**' ]
+    paths:
+      - 'web/**'
+      - '.github/workflows/frontend-tests.yml'
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - 'web/**'
+      - '.github/workflows/frontend-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: web/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Type check
+      run: npx tsc --noEmit
+
+    - name: Run tests
+      run: npm test
+
+    - name: Build
+      run: npm run build
+
+    - name: Upload coverage
+      if: always()
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./web/coverage/coverage-final.json
+        flags: frontend
+        name: codecov-frontend
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}

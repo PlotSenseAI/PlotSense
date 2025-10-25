@@ -1,3 +1,64 @@
 [build-system]
 requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["test"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "unit: Unit tests (fast, isolated)",
+    "integration: Integration tests (test component interaction)",
+    "e2e: End-to-end tests (test full workflows)",
+    "slow: Tests that take significant time to run",
+    "api: Tests that make external API calls",
+    "requires_api_key: Tests requiring valid API credentials",
+    "plotting: Tests that generate visualizations",
+]
+filterwarnings = [
+    "ignore::UserWarning:plotsense.visual_suggestion",
+    "ignore::DeprecationWarning:matplotlib",
+]
+
+[tool.coverage.run]
+source = ["plotsense"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.bandit]
+exclude_dirs = ["test", "tests", "venv", "env", ".venv"]
+skips = ["B101", "B601"]

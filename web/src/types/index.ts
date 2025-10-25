@@ -26,7 +26,7 @@ export interface PlotSuggestion {
   confidence: number;
 }
 
-export type PlotType = 
+export type PlotType =
   | 'scatter'
   | 'bar'
   | 'barh'

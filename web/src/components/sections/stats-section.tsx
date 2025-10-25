@@ -84,7 +84,7 @@ const StatsSection: React.FC = () => {
       <Container className="relative z-10">
         {/* stats grid */}
         <div className="mb-20">
-          <motion.div 
+          <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, clipPath: "circle(0% at 50% 50%)" }}
             whileInView={{ opacity: 1, clipPath: "circle(150% at 50% 50%)" }}
@@ -104,29 +104,29 @@ const StatsSection: React.FC = () => {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
             {stats.map((stat, index) => (
-              <motion.div 
-                key={index} 
+              <motion.div
+                key={index}
                 className="text-center group"
-                initial={{ 
-                  opacity: 0, 
+                initial={{
+                  opacity: 0,
                   scale: 0,
                   rotate: 180
                 }}
-                whileInView={{ 
-                  opacity: 1, 
+                whileInView={{
+                  opacity: 1,
                   scale: 1,
                   rotate: 0
                 }}
-                transition={{ 
-                  duration: 0.8, 
+                transition={{
+                  duration: 0.8,
                   delay: index * 0.15,
                   type: "spring",
                   stiffness: 100,
                   damping: 10
                 }}
                 viewport={{ once: true }}
-                whileHover={{ 
-                  scale: 1.1, 
+                whileHover={{
+                  scale: 1.1,
                   rotate: 5,
                   transition: { duration: 0.2 }
                 }}
@@ -155,7 +155,7 @@ const StatsSection: React.FC = () => {
           transition={{ duration: 1, type: "spring", stiffness: 80 }}
           viewport={{ once: true }}
         >
-          <motion.div 
+          <motion.div
             className="text-center mb-12"
             initial={{ opacity: 0, z: -100 }}
             whileInView={{ opacity: 1, z: 0 }}
@@ -168,30 +168,30 @@ const StatsSection: React.FC = () => {
 
           <div className="grid lg:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <motion.div 
-                key={index} 
+              <motion.div
+                key={index}
                 className="bg-white dark:bg-gray-800 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 dark:border-gray-700 group hover:shadow-lg transition-all duration-300"
-                initial={{ 
-                  opacity: 0, 
+                initial={{
+                  opacity: 0,
                   rotateY: index % 2 === 0 ? -30 : 30,
                   scale: 0.7,
                   z: -50
                 }}
-                whileInView={{ 
-                  opacity: 1, 
+                whileInView={{
+                  opacity: 1,
                   rotateY: 0,
                   scale: 1,
                   z: 0
                 }}
-                transition={{ 
-                  duration: 0.9, 
+                transition={{
+                  duration: 0.9,
                   delay: index * 0.2,
                   type: "spring",
                   stiffness: 70,
                   damping: 12
                 }}
                 viewport={{ once: true }}
-                whileHover={{ 
+                whileHover={{
                   y: -8,
                   rotateY: 5,
                   scale: 1.02,
@@ -202,7 +202,7 @@ const StatsSection: React.FC = () => {
                   <div className="text-lg italic text-gray-700 dark:text-gray-300 leading-relaxed">
                     "{testimonial.quote}"
                   </div>
-                  
+
                   <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-bold">
                       {testimonial.avatar}

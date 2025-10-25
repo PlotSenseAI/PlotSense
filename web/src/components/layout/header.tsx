@@ -51,7 +51,7 @@ const Header: React.FC<HeaderProps> = ({ className }) => {
               </svg>
               <span className="hidden sm:inline">Star</span>
             </button>
-            
+
             {/* theme toggle */}
             <button
               onClick={toggleTheme}

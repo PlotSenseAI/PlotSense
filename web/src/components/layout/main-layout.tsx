@@ -21,7 +21,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
+
       <div className="flex flex-1">
         {showSidebar && (
           <Sidebar
@@ -29,7 +29,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
           />
         )}
-        
+
         <main
           className={cn(
             'flex-1 overflow-auto pt-16',
@@ -41,7 +41,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           </Container>
         </main>
       </div>
-      
+
       {showFooter && <Footer />}
     </div>
   );

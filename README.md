@@ -1,5 +1,12 @@
 # 🌟 PlotSense: AI-Powered Data Visualization Assistant
 
+[![Python Tests](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/python-tests.yml/badge.svg)](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/python-tests.yml)
+[![Frontend Tests](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/frontend-tests.yml)
+[![codecov](https://codecov.io/gh/PlotSenseAI/PlotSenseAI/branch/main/graph/badge.svg)](https://codecov.io/gh/PlotSenseAI/PlotSenseAI)
+[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Code style: flake8](https://img.shields.io/badge/code%20style-flake8-black.svg)](https://flake8.pycqa.org/)
+
 ## 📌 Overview
 
 **PlotSense** is an AI-powered assistant that helps data professionals and analysts make smarter, faster, and more explainable data visualizations. Whether you're exploring a new dataset or building dashboards, PlotSense simplifies the process with:
@@ -81,7 +88,7 @@ plot3 = plotgen(df, 2, suggestions) # This will plot a histogram with variable '
 🎛️ Want more control?
 
 ``` bash
-plot1 = plotgen(df, suggestions.iloc[0], x='pclass', y='survived') 
+plot1 = plotgen(df, suggestions.iloc[0], x='pclass', y='survived')
 ```
 Supported Plots
 - scatter
@@ -124,18 +131,100 @@ plot = plotgen(df, suggestions.iloc[0])
 insight = explainer(plot)
 ```
 
+## 🧪 Testing
+
+PlotSenseAI has comprehensive test coverage for both Python and frontend code.
+
+### Quick Test Commands
+
+**Python Tests:**
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=plotsense --cov-report=html
+
+# Run fast tests only (skip slow tests)
+pytest -m "not slow"
+```
+
+**Frontend Tests:**
+```bash
+cd web
+
+# Run all tests
+npm test
+
+# Run with coverage
+npm run test:coverage
+
+# Run in watch mode
+npm test -- --watch
+```
+
+### Test Infrastructure
+
+- **Backend**: pytest with 950+ lines of tests covering:
+  - Unit tests for individual functions
+  - Integration tests for component interaction
+  - End-to-end workflow tests
+  - Mock external API calls (Groq)
+
+- **Frontend**: Vitest + React Testing Library
+  - Component tests for UI elements
+  - User interaction testing
+  - Accessibility testing
+
+- **CI/CD**: GitHub Actions runs tests automatically on every push and PR
+- **Pre-commit Hooks**: Automated linting and quick tests before commits
+
+For detailed testing documentation, see [TESTING.md](TESTING.md).
+
+### Setting Up Development Environment
+
+```bash
+# Install Python dependencies
+pip install -e .
+pip install pytest pytest-cov pytest-mock
+
+# Install frontend dependencies
+cd web && npm install
+
+# Install pre-commit hooks (optional but recommended)
+pip install pre-commit
+pre-commit install
+```
+
 ## 🤝 Contributing
-We welcome contributions!
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Quick Start for Contributors
+
+1. **Fork and clone** the repository
+2. **Set up development environment:**
+   ```bash
+   pip install -e .
+   pip install pytest pytest-cov pytest-mock pre-commit
+   pre-commit install
+   ```
+3. **Create a feature branch:** `git checkout -b feature/your-feature`
+4. **Make changes and add tests**
+5. **Run tests:** `pytest` and `cd web && npm test`
+6. **Submit a Pull Request**
 
 ### Branching Strategy
-- main → The stable production-ready version of PlotSense.
-- dev → Active development
-- feature/<feature-name> → Branches for specific features (e.g., feature/ai-visualization-suggestions).
+- `main` → Production-ready version
+- `dev` → Active development
+- `feature/<feature-name>` → New features
+- `fix/<bug-name>` → Bug fixes
 
 ### 💡 How to Help
-- 🐞 **Bug Reports** → GitHub Issues
-- 💡 **Suggest features** → Open a discussion
-- 🚀 **Submit PRs** → Fork → Branch → Test → Pull Request
+- 🐞 **Bug Reports** → [Open an issue](https://github.com/PlotSenseAI/PlotSenseAI/issues/new?template=bug_report.md)
+- 💡 **Feature Requests** → [Request a feature](https://github.com/PlotSenseAI/PlotSenseAI/issues/new?template=feature_request.md)
+- ❓ **Questions** → [Ask a question](https://github.com/PlotSenseAI/PlotSenseAI/issues/new?template=question.md)
+- 🚀 **Submit PRs** → See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### 📅 Roadmap
 - More model integrations
@@ -163,9 +252,3 @@ Let your data speak—with clarity, power, and PlotSense.
 
 ## Your Feedback
 [Feedback Form](https://forms.gle/QEjipzHiMagpAQU99)
- 
-
-
-
-
-
