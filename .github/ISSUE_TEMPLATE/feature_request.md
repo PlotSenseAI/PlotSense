@@ -80,4 +80,4 @@ Related to #
 - [ ] I have searched existing issues/PRs for similar feature requests
 - [ ] I have provided a clear use case for this feature
 - [ ] I have considered how this fits with PlotSense's mission
-- [ ] I have provided example usage code
+- [ ] I have provided example usage code.
