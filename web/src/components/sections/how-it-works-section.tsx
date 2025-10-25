@@ -62,14 +62,14 @@ const HowItWorksSection: React.FC = () => {
   return (
     <section className="py-20 bg-white dark:bg-gray-800">
       <Container>
-        <motion.div 
+        <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, y: -50, rotateX: 45 }}
           whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
           transition={{ duration: 1.2, type: "spring", stiffness: 60 }}
           viewport={{ once: true }}
         >
-          <motion.div 
+          <motion.div
             className="inline-flex items-center px-4 py-2 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-sm font-medium mb-4"
             initial={{ scale: 0, rotate: 360 }}
             whileInView={{ scale: 1, rotate: 0 }}
@@ -83,7 +83,7 @@ const HowItWorksSection: React.FC = () => {
             <span className="block text-blue-600 dark:text-blue-400">4 simple steps</span>
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            plotsense integrates seamlessly with your existing python data science workflow, 
+            plotsense integrates seamlessly with your existing python data science workflow,
             making ai-powered visualization accessible to all skill levels.
           </p>
         </motion.div>
@@ -95,25 +95,25 @@ const HowItWorksSection: React.FC = () => {
             <div className="grid lg:grid-cols-4 gap-8 relative">
               {/* connecting line background */}
               <div className="absolute top-24 left-16 right-16 h-0.5 bg-gray-200 dark:bg-gray-700 z-0"></div>
-              
+
               {steps.map((step, index) => (
-                <motion.div 
-                  key={index} 
+                <motion.div
+                  key={index}
                   className="relative"
-                  initial={{ 
-                    opacity: 0, 
+                  initial={{
+                    opacity: 0,
                     y: 100,
                     scale: 0.5,
                     rotateX: 90
                   }}
-                  whileInView={{ 
-                    opacity: 1, 
+                  whileInView={{
+                    opacity: 1,
                     y: 0,
                     scale: 1,
                     rotateX: 0
                   }}
-                  transition={{ 
-                    duration: 0.8, 
+                  transition={{
+                    duration: 0.8,
                     delay: index * 0.3,
                     type: "spring",
                     stiffness: 80,
@@ -123,9 +123,9 @@ const HowItWorksSection: React.FC = () => {
                 >
                   {/* step node */}
                   <div className="relative z-10 flex flex-col items-center">
-                    <motion.div 
+                    <motion.div
                       className={`w-16 h-16 rounded-full bg-gradient-to-r ${step.color} flex items-center justify-center text-white font-bold text-lg shadow-lg mb-4`}
-                      whileHover={{ 
+                      whileHover={{
                         scale: 1.2,
                         rotate: 10,
                         boxShadow: "0 20px 40px rgba(0,0,0,0.3)",
@@ -135,10 +135,10 @@ const HowItWorksSection: React.FC = () => {
                     >
                       {step.number}
                     </motion.div>
-                    
-                    <motion.div 
+
+                    <motion.div
                       className={`w-10 h-10 rounded-lg bg-gradient-to-r ${step.color} flex items-center justify-center text-white mb-4 shadow-md`}
-                      whileHover={{ 
+                      whileHover={{
                         scale: 1.1,
                         rotate: -5,
                         transition: { duration: 0.2 }
@@ -146,7 +146,7 @@ const HowItWorksSection: React.FC = () => {
                     >
                       {step.icon}
                     </motion.div>
-                    
+
                     <div className="text-center space-y-2">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
                         {step.title}
@@ -155,10 +155,10 @@ const HowItWorksSection: React.FC = () => {
                         {step.description}
                       </p>
                     </div>
-                    
+
                     {/* arrow connector */}
                     {index < steps.length - 1 && (
-                      <motion.div 
+                      <motion.div
                         className="absolute top-8 -right-4 z-20"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
@@ -175,25 +175,25 @@ const HowItWorksSection: React.FC = () => {
               ))}
             </div>
           </div>
-          
+
           {/* mobile vertical flow */}
           <div className="lg:hidden space-y-8">
             {steps.map((step, index) => (
-              <motion.div 
-                key={index} 
+              <motion.div
+                key={index}
                 className="relative"
-                initial={{ 
-                  opacity: 0, 
+                initial={{
+                  opacity: 0,
                   x: index % 2 === 0 ? -50 : 50,
                   rotateZ: index % 2 === 0 ? -10 : 10
                 }}
-                whileInView={{ 
-                  opacity: 1, 
+                whileInView={{
+                  opacity: 1,
                   x: 0,
                   rotateZ: 0
                 }}
-                transition={{ 
-                  duration: 0.7, 
+                transition={{
+                  duration: 0.7,
                   delay: index * 0.2,
                   type: "spring",
                   stiffness: 100
@@ -202,7 +202,7 @@ const HowItWorksSection: React.FC = () => {
               >
                 <div className="flex items-start space-x-4">
                   <div className="flex flex-col items-center">
-                    <motion.div 
+                    <motion.div
                       className={`w-12 h-12 rounded-full bg-gradient-to-r ${step.color} flex items-center justify-center text-white font-bold shadow-lg`}
                       whileHover={{ scale: 1.15, rotate: 5 }}
                       whileTap={{ scale: 0.9 }}
@@ -210,7 +210,7 @@ const HowItWorksSection: React.FC = () => {
                       {step.number}
                     </motion.div>
                     {index < steps.length - 1 && (
-                      <motion.div 
+                      <motion.div
                         className="w-0.5 h-16 bg-gray-200 dark:bg-gray-700 mt-4"
                         initial={{ height: 0 }}
                         whileInView={{ height: "4rem" }}
@@ -219,9 +219,9 @@ const HowItWorksSection: React.FC = () => {
                       ></motion.div>
                     )}
                   </div>
-                  
+
                   <div className="flex-1 pt-2">
-                    <motion.div 
+                    <motion.div
                       className={`w-8 h-8 rounded-lg bg-gradient-to-r ${step.color} flex items-center justify-center text-white mb-3 shadow-md`}
                       whileHover={{ scale: 1.1, rotate: -5 }}
                     >
@@ -241,22 +241,22 @@ const HowItWorksSection: React.FC = () => {
         </div>
 
         {/* demo section */}
-        <motion.div 
+        <motion.div
           className="bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900/20 rounded-3xl p-8 lg:p-12 text-center"
-          initial={{ 
-            opacity: 0, 
+          initial={{
+            opacity: 0,
             scale: 0.8,
             rotateX: -20,
             y: 100
           }}
-          whileInView={{ 
-            opacity: 1, 
+          whileInView={{
+            opacity: 1,
             scale: 1,
             rotateX: 0,
             y: 0
           }}
-          transition={{ 
-            duration: 1, 
+          transition={{
+            duration: 1,
             type: "spring",
             stiffness: 70,
             damping: 15
@@ -264,7 +264,7 @@ const HowItWorksSection: React.FC = () => {
           viewport={{ once: true }}
         >
           <div className="max-w-2xl mx-auto space-y-6">
-            <motion.div 
+            <motion.div
               className="inline-flex items-center px-4 py-2 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 text-sm font-medium"
               initial={{ scale: 0, rotate: -180 }}
               whileInView={{ scale: 1, rotate: 0 }}
@@ -273,8 +273,8 @@ const HowItWorksSection: React.FC = () => {
             >
               see it in action
             </motion.div>
-            
-            <motion.h3 
+
+            <motion.h3
               className="text-3xl font-bold text-gray-900 dark:text-gray-100"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -283,19 +283,19 @@ const HowItWorksSection: React.FC = () => {
             >
               ready to enhance your data analysis?
             </motion.h3>
-            
-            <motion.p 
+
+            <motion.p
               className="text-lg text-gray-600 dark:text-gray-300"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
               viewport={{ once: true }}
             >
-              join data scientists and researchers who use plotsense to accelerate 
+              join data scientists and researchers who use plotsense to accelerate
               their exploratory data analysis with ai-powered insights.
             </motion.p>
-            
-            <motion.div 
+
+            <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -306,8 +306,8 @@ const HowItWorksSection: React.FC = () => {
                 whileHover={{ scale: 1.05, rotate: 1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="px-8 py-4 text-lg font-semibold"
                   onClick={() => window.open(EXTERNAL_LINKS.BINDER_DEMO + '?utm_source=website&utm_medium=how_it_works&utm_campaign=try_now', '_blank')}
                 >
@@ -317,14 +317,14 @@ const HowItWorksSection: React.FC = () => {
                   </svg>
                 </Button>
               </motion.div>
-              
+
               <motion.div
                 whileHover={{ scale: 1.05, rotate: -1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button 
-                  variant="outline" 
-                  size="lg" 
+                <Button
+                  variant="outline"
+                  size="lg"
                   className="px-8 py-4 text-lg font-semibold"
                   onClick={() => window.open(EXTERNAL_LINKS.GITHUB_REPO + '?utm_source=website&utm_medium=how_it_works&utm_campaign=view_examples', '_blank')}
                 >

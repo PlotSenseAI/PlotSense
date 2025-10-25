@@ -20,18 +20,18 @@ export const useApi = <T>(
 
     try {
       const response = await apiClient.get<T>(endpoint);
-      
+
       if (response.success) {
         setData(response.data);
       } else {
         setError(response.error || 'api request failed');
       }
-      
+
       return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'unknown error';
       setError(errorMessage);
-      
+
       return {
         success: false,
         data: null as T,
@@ -71,7 +71,7 @@ export const useApiMutation = <T, P = unknown>() => {
 
     try {
       let response: ApiResponse<T>;
-      
+
       switch (method) {
         case 'POST':
           response = await apiClient.post<T>(endpoint, payload);
@@ -94,7 +94,7 @@ export const useApiMutation = <T, P = unknown>() => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'unknown error';
       setError(errorMessage);
-      
+
       return {
         success: false,
         data: null as T,

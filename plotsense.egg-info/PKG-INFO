@@ -51,7 +51,7 @@ pip install plotsense
 
 ```bash
 import plotsense as ps
-from plotsense import recommender, generate_plot, explainer, 
+from plotsense import recommender, generate_plot, explainer,
 ```
 ### 🔐 Authenticate with Groq API:
 Get your free API key from Groq Cloud https://console.groq.com/home
@@ -87,7 +87,7 @@ print(suggestions)
 🎛️ Want more suggestions?
 
 ``` bash
-suggestions = ps.recommender(df, n=10)  
+suggestions = ps.recommender(df, n=10)
 ```
 
 ### 🧾 2. AI-Powered Plot Explanation
@@ -110,7 +110,7 @@ explanation = refine_plot_explanation(
 ```
 - Multiple Refinement Iterations: Increase the number of refinement cycles for more polished explanations:
 
-```bash  
+```bash
 explanation = refine_plot_explanation(fig, iterations=3)  # Default is 2
 ```
 

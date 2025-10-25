@@ -68,7 +68,7 @@ const SimulationSection: React.FC = () => {
   return (
     <section className="py-20 bg-gray-50 dark:bg-gray-900 overflow-hidden">
       <Container className="overflow-hidden">
-        <motion.div 
+        <motion.div
           className="text-center mb-16"
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -90,23 +90,23 @@ const SimulationSection: React.FC = () => {
         {/* simulation steps */}
         <div className="space-y-16">
           {simulationSteps.map((item, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               className={`flex flex-col lg:flex-row items-start lg:items-center gap-8 lg:gap-12 ${
                 index % 2 === 1 ? 'lg:flex-row-reverse' : ''
               }`}
-              initial={{ 
-                opacity: 0, 
+              initial={{
+                opacity: 0,
                 x: index % 2 === 0 ? -100 : 100,
                 rotateZ: index % 2 === 0 ? -3 : 3
               }}
-              whileInView={{ 
-                opacity: 1, 
+              whileInView={{
+                opacity: 1,
                 x: 0,
                 rotateZ: 0
               }}
-              transition={{ 
-                duration: 0.8, 
+              transition={{
+                duration: 0.8,
                 delay: index * 0.2,
                 type: "spring",
                 stiffness: 60
@@ -128,11 +128,11 @@ const SimulationSection: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 leading-relaxed">
                   {item.description}
                 </p>
-                
+
                 {/* code block */}
                 <div className="bg-gray-900 dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-700 w-full max-w-full overflow-hidden">
                   <div className="flex items-center justify-between mb-3">
@@ -150,7 +150,7 @@ const SimulationSection: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* plot visualization */}
               <div className="flex-1 w-full max-w-lg mx-auto">
                 <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
@@ -162,23 +162,23 @@ const SimulationSection: React.FC = () => {
                       {item.plotType} Result
                     </p>
                   </div>
-                  
+
                   <div className="rounded-lg overflow-hidden bg-white w-full">
-                    <img 
+                    <img
                       src={item.plotImage}
                       alt={`PlotSense ${item.plotType} example`}
                       className="w-full h-auto max-w-full object-contain"
                     />
                   </div>
-                  
+
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
-        
+
         {/* bottom cta */}
-        <motion.div 
+        <motion.div
           className="mt-20 text-center"
           initial={{ opacity: 0, y: 100, rotateX: 20 }}
           whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -194,8 +194,8 @@ const SimulationSection: React.FC = () => {
                 try the interactive demo and see how ai can transform your data visualization workflow
               </p>
               <div className="pt-4">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="bg-green-600 hover:bg-green-700 text-white px-8 py-4 text-lg font-semibold"
                   onClick={() => window.open(EXTERNAL_LINKS.BINDER_DEMO + '?utm_source=website&utm_medium=simulation_section&utm_campaign=try_demo', '_blank')}
                 >

@@ -23,7 +23,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
             <span>•</span>
             <span>v{env.app.version}</span>
           </div>
-          
+
           <div className="mt-4 flex items-center space-x-4 text-sm text-muted-foreground md:mt-0">
             <a
               href="https://github.com/christianchimezie/PlotSenseAI"

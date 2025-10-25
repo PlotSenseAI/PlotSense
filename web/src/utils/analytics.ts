@@ -25,7 +25,7 @@ const loadScript = (src: string): Promise<void> => {
 export const initAnalytics = async (measurementId: string | undefined): Promise<void> => {
   if (!measurementId) return;
 
-  if (typeof window.gtag === 'function') return; 
+  if (typeof window.gtag === 'function') return;
 
   window.dataLayer = window.dataLayer || [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,5 +90,3 @@ const bindSpaRouterTracking = (): void => {
 
   window.addEventListener('popstate', () => queueMicrotask(trackPageView));
 };
-
-
