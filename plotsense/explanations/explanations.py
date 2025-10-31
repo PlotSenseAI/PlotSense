@@ -27,6 +27,9 @@ class PlotExplainer:
         interactive: bool = True,
         timeout: int = 30,
     ):
+        self.api_keys = api_keys or {}
+        self.interactive = interactive
+
         self.timeout = timeout # timeout for API calls
         self.max_iterations = max_iterations # max iterations for refinement
         self.strategy_name = strategy # strategy for provider selection
@@ -34,7 +37,7 @@ class PlotExplainer:
         selected_providers = {p for p, _ in (selected_models or [])}
 
         self.manager = ProviderManager(
-            api_keys=api_keys or {},
+            api_keys=self.api_keys,
             interactive=interactive,
             restrict_to=list(selected_providers) if selected_providers else None
         )
