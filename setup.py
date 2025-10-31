@@ -1,4 +1,9 @@
+# -*- coding: utf-8 -*-
+import io
 from setuptools import setup, find_packages
+
+with io.open("README.md", "r", encoding="utf-8") as f:
+    long_description = f.read()
 
 setup(
     name="plotsense",
@@ -6,7 +11,7 @@ setup(
     author="Christian Chimezie, Toluwaleke Ogidan, Grace Farayola, Amaka Iduwe, Nelson Ogbeide, Onyekachukwu Ojumah, Olamilekan Ajao",
     author_email="chimeziechristiancc@gmail.com, gbemilekeogidan@gmail.com, gracefarayola@gmail.com, nwaamaka_iduwe@yahoo.com, Ogbeide331@gmail.com, Onyekaojumah22@gmail.com, olamilekan011@gmail.com",
     description="An intelligent plotting package with suggestions and explanations",
-    long_description=open("README.md").read(),
+    long_description=long_description, # open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/christianchimezie/PlotSenseAI",
     project_urls={
@@ -34,6 +39,9 @@ setup(
         "numpy>=1.18",
         "python-dotenv",
         "groq",
+        "anthropic",
+        "openai",
+        "google-genai",
         "requests",
     ],
     license="Apache License 2.0",
