@@ -1,1 +1,2 @@
-from plotsense.visual_suggestion.suggestions import recommender, VisualizationRecommender
+from plotsense.visual_suggestion.suggestions import recommender
+from plotsense.visual_suggestion.recommender import VisualizationRecommender
