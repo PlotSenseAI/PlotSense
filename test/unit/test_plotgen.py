@@ -10,7 +10,8 @@ from unittest.mock import patch, MagicMock
 matplotlib.use('Agg')
 
 # SUT
-from plotsense.plot_generator.generator import PlotGenerator, SmartPlotGenerator, plotgen
+from plotsense.plot_generator.base_generator import PlotGenerator
+from plotsense.plot_generator.generator import BasicPlotGenerator, SmartPlotGenerator, plotgen
 
 # Fixtures
 @pytest.fixture
@@ -55,8 +56,8 @@ def sample_suggestions():
 
 @pytest.fixture
 def plot_generator(sample_dataframe, sample_suggestions):
-    """Fixture for PlotGenerator instance."""
-    return PlotGenerator(sample_dataframe, sample_suggestions)
+    """Fixture for BasicPlotGenerator instance."""
+    return BasicPlotGenerator(sample_dataframe, sample_suggestions)
 
 @pytest.fixture
 def smart_plot_generator(sample_dataframe, sample_suggestions):
@@ -71,9 +72,9 @@ def reset_plot_generator_instance():
     _plot_generator_instance = None
 
 # Unit Tests
-class TestPlotGeneratorUnit:
+class TestBasicPlotGeneratorUnit:
     def test_init_plot_generator(self, sample_dataframe, sample_suggestions):
-        pg = PlotGenerator(sample_dataframe, sample_suggestions)
+        pg = BasicPlotGenerator(sample_dataframe, sample_suggestions)
         assert pg.data.equals(sample_dataframe)
         assert pg.suggestions.equals(sample_suggestions)
         expected_functions = set(['scatter', 'line', 'bar', 'barh', 'stem', 'step', 'fill_between',
@@ -89,9 +90,9 @@ class TestPlotGeneratorUnit:
                                 'hist', 'boxplot', 'violinplot', 'errorbar', 'pie', 'polar',
                                 'hexbin', 'quiver', 'streamplot', 'plot3d', 'scatter3d', 'bar3d', 'surface'])
         assert set(spg.plot_functions.keys()) == expected_functions
-        assert spg.plot_functions['boxplot'] != PlotGenerator(sample_dataframe, sample_suggestions).plot_functions['boxplot']
-        assert spg.plot_functions['violinplot'] != PlotGenerator(sample_dataframe, sample_suggestions).plot_functions['violinplot']
-        assert spg.plot_functions['hist'] != PlotGenerator(sample_dataframe, sample_suggestions).plot_functions['hist']
+        assert spg.plot_functions['boxplot'] != BasicPlotGenerator(sample_dataframe, sample_suggestions).plot_functions['boxplot']
+        assert spg.plot_functions['violinplot'] != BasicPlotGenerator(sample_dataframe, sample_suggestions).plot_functions['violinplot']
+        assert spg.plot_functions['hist'] != BasicPlotGenerator(sample_dataframe, sample_suggestions).plot_functions['hist']
 
     def test_generate_plot_with_index(self, plot_generator):
         fig = plot_generator.generate_plot(0)
@@ -364,7 +365,7 @@ class TestPlotFunctions:
         plt.close(fig)
 
 # Integration Tests
-class TestPlotGeneratorIntegration:
+class TestBasicPlotGeneratorIntegration:
     @pytest.mark.parametrize("index", [0, 5, 10, 15, 19])
     def test_plotgen_with_index(self, sample_dataframe, sample_suggestions, index, sample_2d_array):
         # Add x2d for plots requiring 2D arrays
@@ -419,7 +420,7 @@ class TestPlotGeneratorIntegration:
         plt.close(fig)
 
 # End-to-End Tests
-class TestPlotGeneratorEndToEnd:
+class TestBasicPlotGeneratorEndToEnd:
     @pytest.mark.parametrize("index", range(19))  # Exclude surface for now
     def test_all_plot_types_default(self, sample_dataframe, sample_suggestions, index, sample_2d_array):
         """Test all plot types with default settings."""
@@ -486,7 +487,7 @@ class TestPlotGeneratorEndToEnd:
         plt.close(fig)
 
 # Error Handling Tests
-class TestPlotGeneratorErrorHandling:
+class TestBasicPlotGeneratorErrorHandling:
     def test_plotgen_invalid_index(self, sample_dataframe, sample_suggestions):
         """Test plotgen with invalid index."""
         with pytest.raises(IndexError):
@@ -547,7 +548,7 @@ class TestPlotGeneratorErrorHandling:
             plotgen(df, 8, sample_suggestions)
 
 # Performance Tests
-class TestPlotGeneratorPerformance:
+class TestBasicPlotGeneratorPerformance:
     @pytest.mark.parametrize("n", [1000, 10000])
     @pytest.mark.parametrize("index", [0, 7, 16])  # Scatter, Hist, Plot3D
     def test_performance_various_plots(self, sample_suggestions, n, index):
@@ -590,7 +591,7 @@ class TestPlotGeneratorPerformance:
         plt.close(fig)
 
 # Edge Case Tests
-class TestPlotGeneratorEdgeCases:
+class TestBasicPlotGeneratorEdgeCases:
     def test_empty_dataframe(self, sample_suggestions):
         """Test plotgen with an empty DataFrame."""
         df_empty = pd.DataFrame(columns=["value", "count"])

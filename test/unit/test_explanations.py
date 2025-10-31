@@ -34,10 +34,10 @@ def sample_plot(sample_data):
 def mock_groq_completion():
     mock_message = MagicMock()
     type(mock_message).content = PropertyMock(return_value="Mock explanation")
-    
+
     mock_choice = MagicMock()
     mock_choice.message = mock_message
-    
+
     mock_response = MagicMock()
     mock_response.choices = [mock_choice]
     return mock_response
