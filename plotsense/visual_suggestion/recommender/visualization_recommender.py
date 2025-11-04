@@ -15,12 +15,12 @@ class VisualizationRecommender:
 
     def __init__(
         self,
-        api_keys: Optional[Dict[str, str]],
-        strategy: StrategyName,
-        selected_models: Optional[List[Tuple[str, str]]],
-        timeout: int,
-        interactive: bool,
-        debug: bool,
+        api_keys: Optional[Dict[str, str]] = None,
+        strategy: StrategyName = StrategyName.ROUND_ROBIN,
+        selected_models: Optional[List[Tuple[str, str]]] = None,
+        timeout: int = 30,
+        interactive: bool = True,
+        debug: bool = False,
     ):
         """
         Initialize VisualizationRecommender with API keys and configuration.
@@ -32,6 +32,8 @@ class VisualizationRecommender:
             interactive: Whether to prompt for missing API keys
             debug: Enable debug output
         """
+        self.api_keys = api_keys or {}
+
         self.timeout = timeout
         self.interactive = interactive
         self.debug = debug
@@ -40,7 +42,7 @@ class VisualizationRecommender:
         selected_providers = {p for p, _ in (selected_models or [])}
 
         self.manager = ProviderManager(
-            api_keys=api_keys or {},
+            api_keys=self.api_keys,
             interactive=interactive,
             restrict_to=list(selected_providers) if selected_providers else None
         )

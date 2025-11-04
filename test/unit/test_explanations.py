@@ -8,6 +8,8 @@ import tempfile
 from PIL import Image
 from dotenv import load_dotenv
 import matplotlib
+
+from plotsense.core.utils import encode_image, save_plot_to_image
 matplotlib.use("Agg")
 load_dotenv()
 
@@ -98,35 +100,44 @@ class TestPlotExplainerInitialization:
 
     def test_initialize_clients(self, mock_groq_client):
         explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
-        assert 'groq' in explainer.clients
-        assert explainer.clients['groq'] is not None
+        providers = [p for p, _ in explainer.available_models]
+        groq_models = [m for p, m in explainer.available_models if p == 'groq']
+
+        assert 'groq' in providers, "Expected 'groq' to be among available providers"
+        assert len(groq_models) > 0, "Expected at least one model for provider 'groq'"
 
     def test_detect_available_models(self, plot_explainer_instance):
-        assert len(plot_explainer_instance.available_models) > 0
-        assert all(model in PlotExplainer.DEFAULT_MODELS['groq'] 
-                  for model in plot_explainer_instance.available_models)
+        available_models = plot_explainer_instance.available_models
+
+        assert len(available_models) > 0, "Expected at least one available model"
+
+        providers = [p for p, _ in available_models]
+        groq_models = [m for p, m in available_models if p == 'groq']
+
+        assert 'groq' in providers, "Expected 'groq' to be among available providers"
+        assert len(groq_models) > 0, "Expected at least one model for provider 'groq'"
 
 class TestPlotHandling:
     def test_save_plot_to_image_figure(self, sample_plot, tmp_path):
         explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
         fig = sample_plot.figure
         output_path = tmp_path / "test_figure.jpg"
-        result = explainer.save_plot_to_image(fig, str(output_path))
+        result = save_plot_to_image(fig, str(output_path))
         assert os.path.exists(result)
         assert Image.open(result).format == 'JPEG'
 
     def test_save_plot_to_image_axes(self, sample_plot, tmp_path):
         explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
         output_path = tmp_path / "test_axes.jpg"
-        result = explainer.save_plot_to_image(sample_plot, str(output_path))
+        result = save_plot_to_image(sample_plot, str(output_path))
         assert os.path.exists(result)
         assert Image.open(result).format == 'JPEG'
 
     def test_encode_image(self, sample_plot, tmp_path):
         explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
         output_path = tmp_path / "test_encode.jpg"
-        explainer.save_plot_to_image(sample_plot, str(output_path))
-        encoded = explainer.encode_image(str(output_path))
+        save_plot_to_image(sample_plot, str(output_path))
+        encoded = encode_image(str(output_path))
         assert isinstance(encoded, str)
         assert len(encoded) > 0
 

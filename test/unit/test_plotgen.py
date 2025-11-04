@@ -80,7 +80,7 @@ class TestBasicPlotGeneratorUnit:
         expected_functions = set(['scatter', 'line', 'bar', 'barh', 'stem', 'step', 'fill_between',
                                 'hist', 'boxplot', 'violinplot', 'errorbar', 'pie', 'polar',
                                 'hexbin', 'quiver', 'streamplot', 'plot3d', 'scatter3d', 'bar3d', 'surface'])
-        assert set(pg.plot_functions.keys()) == expected_functions
+        assert set(pg._default_plots.keys()) == expected_functions
 
     def test_init_smart_plot_generator(self, sample_dataframe, sample_suggestions):
         spg = SmartPlotGenerator(sample_dataframe, sample_suggestions)
@@ -89,10 +89,10 @@ class TestBasicPlotGeneratorUnit:
         expected_functions = set(['scatter', 'line', 'bar', 'barh', 'stem', 'step', 'fill_between',
                                 'hist', 'boxplot', 'violinplot', 'errorbar', 'pie', 'polar',
                                 'hexbin', 'quiver', 'streamplot', 'plot3d', 'scatter3d', 'bar3d', 'surface'])
-        assert set(spg.plot_functions.keys()) == expected_functions
-        assert spg.plot_functions['boxplot'] != BasicPlotGenerator(sample_dataframe, sample_suggestions).plot_functions['boxplot']
-        assert spg.plot_functions['violinplot'] != BasicPlotGenerator(sample_dataframe, sample_suggestions).plot_functions['violinplot']
-        assert spg.plot_functions['hist'] != BasicPlotGenerator(sample_dataframe, sample_suggestions).plot_functions['hist']
+        assert set(spg._default_plots.keys()) == expected_functions
+        assert spg._default_plots['boxplot'] != BasicPlotGenerator(sample_dataframe, sample_suggestions)._default_plots['boxplot']
+        assert spg._default_plots['violinplot'] != BasicPlotGenerator(sample_dataframe, sample_suggestions)._default_plots['violinplot']
+        assert spg._default_plots['hist'] != BasicPlotGenerator(sample_dataframe, sample_suggestions)._default_plots['hist']
 
     def test_generate_plot_with_index(self, plot_generator):
         fig = plot_generator.generate_plot(0)
@@ -109,8 +109,8 @@ class TestBasicPlotGeneratorUnit:
         assert len(ax.collections) == 1  # Scatter plot has one collection
         plt.close(fig)
 
-    def test_initialize_plot_functions(self, plot_generator):
-        funcs = plot_generator._initialize_plot_functions()
+    def test_initialize__default_plots(self, plot_generator):
+        funcs = plot_generator._initialize__default_plots()
         assert all(callable(func) for func in funcs.values())
         expected_functions = set(['scatter', 'line', 'bar', 'barh', 'stem', 'step', 'fill_between',
                                 'hist', 'boxplot', 'violinplot', 'errorbar', 'pie', 'polar',
