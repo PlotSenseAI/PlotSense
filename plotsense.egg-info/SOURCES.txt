@@ -11,6 +11,16 @@ plotsense.egg-info/requires.txt
 plotsense.egg-info/top_level.txt
 plotsense/explanations/__init__.py
 plotsense/explanations/explanations.py
+plotsense/plot_chat/__init__.py
+plotsense/plot_chat/action.py
+plotsense/plot_chat/audio.py
+plotsense/plot_chat/chat.py
+plotsense/plot_chat/client.py
+plotsense/plot_chat/file.py
+plotsense/plot_chat/function_calls.py
+plotsense/plot_chat/prompts.py
+plotsense/plot_chat/realtime.py
+plotsense/plot_chat/streaming.py
 plotsense/plot_generator/__init__.py
 plotsense/plot_generator/base_generator.py
 plotsense/plot_generator/basic_generator.py
@@ -28,8 +38,3 @@ plotsense/visual_suggestion/recommender/prompt_builder.py
 plotsense/visual_suggestion/recommender/response_parser.py
 plotsense/visual_suggestion/recommender/visualization_recommender.py
 test/__init__.py
-test/my_ptce_test.py
-test/my_test.py
-test/test_explanations.py
-test/test_plotgen.py
-test/test_suggestions.py

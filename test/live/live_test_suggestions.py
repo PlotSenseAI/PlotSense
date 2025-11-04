@@ -11,7 +11,7 @@ df = pd.DataFrame({
 # Replace with your actual API keys
 api_keys = {
     "groq": "gsk_xyz",
-    "openai": "sk-proj-xyz-abc",
+    "openai": "sk-proj-xyz-abc"
     "azure": "ghp_xyz",
 }
 
@@ -20,7 +20,7 @@ recommendations = recommender(
     df,
     n=3,  # number of visualizations to recommend
     api_keys=api_keys,
-    selected_models=[("azure", "openai/gpt-5")],
+    selected_models=[("openai", "gpt-5")],
 )
 
 # Display the recommendations

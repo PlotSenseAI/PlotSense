@@ -247,8 +247,6 @@ class AIModelInterface:
         except Exception as e:
             warnings.warn(f"[AIModelInterface] Querying error for {provider}:{model} -> {str(e)}")
             return f"Error: {e}"
-        finally:
-            return f"Error: No valid query handler found for provider '{provider}'."
 
     def get_model_weights(self) -> Dict[str, float]:
         """

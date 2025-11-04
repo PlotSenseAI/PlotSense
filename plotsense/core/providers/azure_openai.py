@@ -55,7 +55,11 @@ class AzureOpenAIProvider(LLMProvider):
 
         try:
             if "max_tokens" in kwargs:
-                kwargs["max_output_tokens"] = kwargs.pop("max_tokens")
+                kwargs["max_completion_tokens"] = kwargs.pop("max_tokens")
+
+            if 'temperature' in kwargs:
+                kwargs['temperature'] = 1
+
             response = self.client.chat.completions.create(
                 model=model,
                 messages=messages,
