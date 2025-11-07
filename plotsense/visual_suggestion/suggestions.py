@@ -12,52 +12,61 @@ import builtins
 from pprint import pprint
 from groq import Groq
 
+# cache utils
+from viz_cache import (
+    create_cache,
+    CacheKeyBuilder,
+    normalize_prompt,
+    schema_signature,
+    weights_signature
+)
 
 load_dotenv()
 
 
 class VisualizationRecommender:
     DEFAULT_MODELS = {
-        'groq': [
-            ('llama-3.3-70b-versatile', 0.5),  # (model_name, weight)
-            ('llama-3.1-8b-instant', 0.5)
-
+        "groq": [
+            ("llama-3.3-70b-versatile", 0.5),
+            ("llama-3.1-8b-instant", 0.5),
         ],
-        
     }
 
-    def __init__(self,
-                 api_keys: Optional[Dict[str,
-                                         str]] = None,
-                 timeout: int = 30,
-                 interactive: bool = True,
-                 debug: bool = False):
+    def __init__(
+        self,
+        api_keys: Optional[Dict[str, str]] = None,
+        timeout: int = 30,
+        interactive: bool = True,
+        debug: bool = False,
+    ):
         """
         Initialize VisualizationRecommender with API keys and configuration.
-
-        Args:
-            api_keys: Optional dictionary of API keys. If not provided,
-                     keys will be loaded from environment variables.
-            timeout: Timeout in seconds for API requests
-            interactive: Whether to prompt for missing API keys
-            debug: Enable debug output
         """
         self.interactive = interactive
         self.debug = debug
         api_keys = api_keys or {}
         self.api_keys = {
-            'groq': os.getenv('GROQ_API_KEY')
-            # Add other services here
+            "groq": os.getenv("GROQ_API_KEY"),
         }
+        self.api_keys.update(api_keys)
 
         self.timeout = timeout
-        self.clients = {}
-        self.available_models = []
-        self.df = None
-        self.model_weights = {}
+        self.clients: Dict[str, Groq] = {}
+        self.available_models: List[str] = []
+        self.df: Optional[pd.DataFrame] = None
+        self.model_weights: Dict[str, float] = {}
         self.n_to_request = 5
 
-        self.api_keys.update(api_keys)
+        # versions (bump these when prompt/scoring logic changes to bust cache)
+        self.code_version = "v1.0"
+        self.prompt_version = "v1"
+
+        # in-session cache (memory only)
+        self.cache = create_cache(
+            capacity=256,
+            default_ttl=30 * 60,  # 30 minutes
+            log_hits=self.debug,
+        )
 
         self._validate_keys()
         self._initialize_clients()
@@ -68,34 +77,25 @@ class VisualizationRecommender:
             print("\n[DEBUG] Initialization Complete")
             print(f"Available models: {self.available_models}")
             print(f"Model weights: {self.model_weights}")
-            if hasattr(self, 'clients'):
-                print(f"Clients initialized: {bool(self.clients)}")
+            print(f"Clients initialized: {bool(self.clients)}")
+
+    # ------------------------ setup ------------------------
 
     def _validate_keys(self):
-        """Validate that required API keys are present"""
-        service_links = {
-            'groq': 'https://console.groq.com/keys '
-        }
-
-        for service in ['groq']:
+        """Validate that required API keys are present."""
+        service_links = {"groq": "https://console.groq.com/keys"}
+        for service in ["groq"]:
             if not self.api_keys.get(service):
                 if self.interactive:
                     try:
-                        link = service_links.get(
-                            service, f"the {service.upper()} website")
-                        message = (
-                            f"Enter {
-                                service.upper()} API key (get it at {link}): ")
-                        self.api_keys[service] = builtins.input(
-                            message).strip()
+                        link = service_links.get(service, f"the {service.upper()} website")
+                        message = f"Enter {service.upper()} API key (get it at {link}): "
+                        self.api_keys[service] = builtins.input(message).strip()
                         if not self.api_keys[service]:
-                            raise ValueError(
-                                f"{service.upper()} API key is required")
+                            raise ValueError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
-                        # Handle cases where input is not available
                         raise ValueError(
-                            f"{service.upper()} API key is required "
-                            f"(get it at {service_links.get(service)})"
+                            f"{service.upper()} API key is required (get it at {service_links.get(service)})"
                         )
                 else:
                     raise ValueError(
@@ -105,47 +105,40 @@ class VisualizationRecommender:
                     )
 
     def _initialize_clients(self):
-        """Initialize API clients"""
+        """Initialize API clients."""
         self.clients = {}
-        if self.api_keys.get('groq'):
+        if self.api_keys.get("groq"):
             try:
-                self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
+                self.clients["groq"] = Groq(api_key=self.api_keys["groq"])
             except ImportError:
-                warnings.warn(
-                    "Groq Python client not installed. pip install groq")
+                warnings.warn("Groq Python client not installed. pip install groq")
 
     def _detect_available_models(self):
         self.available_models = []
         for provider, client in self.clients.items():
             if client and provider in self.DEFAULT_MODELS:
-                self.available_models.extend(
-                    [m[0] for m in self.DEFAULT_MODELS[provider]])
-
+                self.available_models.extend([m[0] for m in self.DEFAULT_MODELS[provider]])
         if self.debug:
-            print(
-                f"[DEBUG] Detected available models: {self.available_models}")
+            print(f"[DEBUG] Detected available models: {self.available_models}")
 
     def _initialize_model_weights(self):
-        total_weight = 0
+        total_weight = 0.0
         self.model_weights = {}
-
-        # Only include weights for available models
         for provider in self.DEFAULT_MODELS:
             for model, weight in self.DEFAULT_MODELS[provider]:
                 if model in self.available_models:
-                    self.model_weights[model] = weight
-                    total_weight += weight
-
-        # Normalize weights to sum to 1
+                    self.model_weights[model] = float(weight)
+                    total_weight += float(weight)
         if total_weight > 0:
-            for model in self.model_weights:
-                self.model_weights[model] /= total_weight
-
+            for model in list(self.model_weights.keys()):
+                self.model_weights[model] = self.model_weights[model] / total_weight
         if self.debug:
             print(f"[DEBUG] Model weights: {self.model_weights}")
 
+    # ------------------------ public API ------------------------
+
     def set_dataframe(self, df: pd.DataFrame):
-        """Set the DataFrame to analyze and provide debug info"""
+        """Set the DataFrame to analyze and provide debug info."""
         self.df = df
         if self.debug:
             print("\n[DEBUG] DataFrame Info:")
@@ -154,30 +147,18 @@ class VisualizationRecommender:
             print("\nSample data:")
             print(df.head(2))
 
-    def recommend_visualizations(self,
-                                 n: int = 5,
-                                 custom_weights: Optional[Dict[str,
-                                                               float]] = None) -> pd.DataFrame:
+    def recommend_visualizations(
+        self,
+        n: int = 5,
+        custom_weights: Optional[Dict[str, float]] = None,
+    ) -> pd.DataFrame:
         """
         Generate visualization recommendations using weighted ensemble approach.
-
-        Args:
-            n: Number of recommendations to return (default: 3)
-            custom_weights: Optional dictionary to override default model weights
-
-        Returns:
-            pd.DataFrame: Recommended visualizations with ensemble scores
-
-        Raises:
-            ValueError:
-            If no DataFrame is set or no models are available
         """
-        """Generate visualization recommendations using weighted ensemble approach."""
         self.n_to_request = max(n, 5)
 
         if self.df is None:
             raise ValueError("No DataFrame set. Call set_dataframe() first.")
-
         if not self.available_models:
             raise ValueError("No available models detected")
 
@@ -185,19 +166,34 @@ class VisualizationRecommender:
             print("\n[DEBUG] Starting recommendation process")
             print(f"Using models: {self.available_models}")
 
-        # Use custom weights if provided, otherwise use defaults
+        # weights
         weights = custom_weights if custom_weights else self.model_weights
 
-        # Get recommendations from all models in parallel
+        # ---- Try ensemble cache first (skips model calls entirely) ----
+        ens_key = CacheKeyBuilder.ensemble(
+            df_schema_sig=schema_signature(self.df),
+            models=self.available_models,
+            weights_sig=weights_signature(weights),
+            n=n,
+            code_version=self.code_version,
+            prompt_version=self.prompt_version,
+        )
+        cached_df = self.cache.get(ens_key)
+        if cached_df is not None:
+            if self.debug:
+                print("[DEBUG] Ensemble result from cache")
+                print(self.cache.stats())
+            return cached_df.head(n)
+
+        # ---- Get recommendations from all models in parallel ----
         all_recommendations = self._get_all_recommendations()
 
         if self.debug:
             print("\n[DEBUG] Raw recommendations from models:")
             pprint(all_recommendations)
 
-        # Apply weighted ensemble scoring
-        ensemble_results = self._apply_ensemble_scoring(
-            all_recommendations, weights)
+        # ---- Apply weighted ensemble scoring ----
+        ensemble_results = self._apply_ensemble_scoring(all_recommendations, weights)
 
         # Validate and correct variable order
         if not ensemble_results.empty:
@@ -206,21 +202,25 @@ class VisualizationRecommender:
         # If we don't have enough results, try to supplement
         if len(ensemble_results) < n:
             if self.debug:
-                print(
-                    f"\n[DEBUG] Only got {
-                        len(ensemble_results)} recommendations, trying to supplement")
-            return self._supplement_recommendations(ensemble_results, n)
+                print(f"\n[DEBUG] Only got {len(ensemble_results)} recommendations, trying to supplement")
+            out = self._supplement_recommendations(ensemble_results, n)
+            # store what we have in cache
+            self.cache.set(ens_key, out)
+            if self.debug:
+                print("\n[DEBUG] Cache stats:", self.cache.stats())
+            return out
 
+        # Store full ensemble in cache and return top-n
+        self.cache.set(ens_key, ensemble_results)
         if self.debug:
             print("\n[DEBUG] Ensemble results before filtering:")
             print(ensemble_results)
-
+            print("\n[DEBUG] Cache stats:", self.cache.stats())
         return ensemble_results.head(n)
 
-    def _supplement_recommendations(
-            self,
-            existing: pd.DataFrame,
-            target: int) -> pd.DataFrame:
+    # ------------------------ internals ------------------------
+
+    def _supplement_recommendations(self, existing: pd.DataFrame, target: int) -> pd.DataFrame:
         """Generate additional recommendations if we didn't get enough initially."""
         if len(existing) >= target:
             return existing.head(target)
@@ -228,12 +228,12 @@ class VisualizationRecommender:
         needed = target - len(existing)
         df_description = self._describe_dataframe()
 
-        # Try to get more recommendations from the best-performing model
-        best_model = existing.iloc[0]['source_models'][0] if not existing.empty else self.available_models[0]
+        # Try to get more recommendations from the first contributing model
+        best_model = existing.iloc[0]["source_models"][0] if not existing.empty else self.available_models[0]
 
         prompt = textwrap.dedent(f"""
             You already recommended these visualizations:
-            {existing[['plot_type', 'variables']].to_string()}
+            {existing[['plot_type', 'variables']].to_string(index=False)}
 
             Please recommend {needed} ADDITIONAL different visualizations for:
             {df_description}
@@ -242,28 +242,21 @@ class VisualizationRecommender:
         """)
 
         try:
+            # model call is cached by _get_model_recommendations path; here we call directly
             response = self._query_llm(prompt, best_model)
-            new_recs = self._parse_recommendations(
-                response, f"{best_model}-supplement")
+            new_recs = self._parse_recommendations(response, f"{best_model}-supplement")
 
-            # Combine with existing
-            combined = pd.concat(
-                [existing, pd.DataFrame(new_recs)], ignore_index=True)
-            combined = combined.drop_duplicates(
-                subset=['plot_type', 'variables'])
+            combined = pd.concat([existing, pd.DataFrame(new_recs)], ignore_index=True)
+            combined = combined.drop_duplicates(subset=["plot_type", "variables"])
 
             if self.debug:
-                print(
-                    f"\n[DEBUG] Supplemented with {
-                        len(new_recs)} new recommendations")
+                print(f"\n[DEBUG] Supplemented with {len(new_recs)} new recommendations")
 
             return combined.head(target)
         except Exception as e:
             if self.debug:
-                print(
-                    f"\n[WARNING] Couldn't supplement recommendations: {
-                        str(e)}")
-            return existing.head(target)  # Return what we have
+                print(f"\n[WARNING] Couldn't supplement recommendations: {str(e)}")
+            return existing.head(target)
 
     def _get_all_recommendations(self) -> Dict[str, List[Dict]]:
         df_description = self._describe_dataframe()
@@ -273,23 +266,21 @@ class VisualizationRecommender:
             print("\n[DEBUG] Prompt being sent to models:")
             print(prompt)
 
-        model_handlers = {
-            'llama': self._query_llm
-            
-            # Add other model handlers here
+        model_handlers: Dict[str, Callable[[str, str], str]] = {
+            "llama": self._query_llm,
+            # add other model families here and map accordingly
         }
 
-        all_recommendations = {}
+        all_recommendations: Dict[str, List[Dict]] = {}
 
         with ThreadPoolExecutor() as executor:
             futures = {}
             for model in self.available_models:
-                model_type = model.split('-')[0].lower()
+                model_type = model.split("-")[0].lower()
                 if model_type.startswith(("llama", "mistral")):
                     model_type = "llama" if "llama" in model_type else "mistral"
-                query_func = model_handlers[model_type]
-                futures[executor.submit(
-                    self._get_model_recommendations, model, prompt, query_func)] = model
+                query_func = model_handlers.get(model_type, self._query_llm)
+                futures[executor.submit(self._get_model_recommendations, model, prompt, query_func)] = model
 
             for future in concurrent.futures.as_completed(futures):
                 model = futures[future]
@@ -297,93 +288,102 @@ class VisualizationRecommender:
                     result = future.result()
                     all_recommendations[model] = result
                     if self.debug:
-                        print(
-                            f"\n[DEBUG] Got {
-                                len(result)} recommendations from {model}")
+                        print(f"\n[DEBUG] Got {len(result)} recommendations from {model}")
                 except Exception as e:
-                    warnings.warn(
-                        f"Failed to get recommendations from {model}: {
-                            str(e)}")
+                    warnings.warn(f"Failed to get recommendations from {model}: {str(e)}")
                     if self.debug:
                         print(f"\n[ERROR] Failed to process {model}: {str(e)}")
 
         return all_recommendations
 
-    def _get_model_recommendations(self,
-                                   model: str,
-                                   prompt: str,
-                                   query_func: Callable[[str,
-                                                         str],
-                                                        str]) -> List[Dict]:
-        try:
-            response = query_func(prompt, model)
+    def _get_model_recommendations(
+        self,
+        model: str,
+        prompt: str,
+        query_func: Callable[[str, str], str],
+    ) -> List[Dict]:
+        """
+        Call the model with caching at the model-response layer,
+        then parse into structured recommendations.
+        """
+        # build namespaced cache key for this model response
+        key = CacheKeyBuilder.model_response(
+            provider="groq",
+            model=model,
+            norm_prompt=normalize_prompt(prompt),
+            df_schema_sig=schema_signature(self.df),
+            prompt_version=self.prompt_version,
+            # include params that can change output
+            temperature=0.4,
+        )
 
+        def compute_fn() -> str:
             if self.debug:
-                print(f"\n[DEBUG] Raw response from {model}:")
-                print(response)
+                print(f"[DEBUG] Cache MISS → calling model {model}")
+            return query_func(prompt, model)
 
-            return self._parse_recommendations(response, model)
+        raw_text = self.cache.get_or_compute(key, compute_fn)
+        if self.debug and raw_text:
+            print(f"\n[DEBUG] Raw response from {model} (cached={raw_text is not None}):")
+            # print the first few lines for brevity
+            print("\n".join(raw_text.splitlines()[:12]))
+
+        try:
+            return self._parse_recommendations(raw_text, model)
         except Exception as e:
             warnings.warn(f"Error processing model {model}: {str(e)}")
             if self.debug:
-                print(
-                    f"\n[ERROR] Failed to parse response from {model}: {
-                        str(e)}")
+                print(f"\n[ERROR] Failed to parse response from {model}: {str(e)}")
             return []
 
-    def _apply_ensemble_scoring(self,
-                                all_recommendations: Dict[str,
-                                                          List[Dict]],
-                                weights: Dict[str,
-                                              float]) -> pd.DataFrame:
-        output_columns = ['plot_type', 'variables',
-                          'ensemble_score', 'model_agreement', 'source_models']
+    def _apply_ensemble_scoring(
+        self,
+        all_recommendations: Dict[str, List[Dict]],
+        weights: Dict[str, float],
+    ) -> pd.DataFrame:
+        output_columns = ["plot_type", "variables", "ensemble_score", "model_agreement", "source_models"]
 
         if self.debug:
             print("\n[DEBUG] Applying ensemble scoring with weights:")
             pprint(weights)
 
         recommendation_weights = defaultdict(float)
-        recommendation_details = {}
+        recommendation_details: Dict[tuple, Dict] = {}
 
         for model, recs in all_recommendations.items():
-            model_weight = weights.get(model, 0)
+            model_weight = weights.get(model, 0.0)
             if model_weight <= 0:
                 continue
 
             for rec in recs:
-                # Create a consistent key for the recommendation
-                variables = rec['variables']
+                variables = rec["variables"]
                 if isinstance(variables, str):
-                    variables = [v.strip() for v in variables.split(',')]
+                    variables = [v.strip() for v in variables.split(",")]
 
-                # Filter variables to only those in the DataFrame
-                valid_vars = [
-                    var for var in variables if var in self.df.columns]
+                # keep only variables that exist in dataframe
+                valid_vars = [var for var in variables if var in self.df.columns]
                 if not valid_vars:
                     if self.debug:
-                        print(
-                            f"\n[DEBUG] Skipping recommendation from {model} with invalid variables: {variables}")
+                        print(f"\n[DEBUG] Skipping recommendation from {model} with invalid variables: {variables}")
                     continue
 
-                var_key = ', '.join(sorted(valid_vars))
-                rec_key = (rec['plot_type'].lower(), var_key)
+                var_key = ", ".join(sorted(valid_vars))
+                rec_key = (rec["plot_type"].lower(), var_key)
 
-                model_score = rec.get('score', 1.0)
+                model_score = float(rec.get("score", 1.0))
                 total_weight = model_weight * model_score
                 recommendation_weights[rec_key] += total_weight
 
                 if rec_key not in recommendation_details:
                     recommendation_details[rec_key] = {
-                        'plot_type': rec['plot_type'],
-                        'variables': var_key,
-                        'source_models': [model],
-                        'raw_weight': total_weight
+                        "plot_type": rec["plot_type"],
+                        "variables": var_key,
+                        "source_models": [model],
+                        "raw_weight": total_weight,
                     }
                 else:
-                    recommendation_details[rec_key]['source_models'].append(
-                        model)
-                    recommendation_details[rec_key]['raw_weight'] += total_weight
+                    recommendation_details[rec_key]["source_models"].append(model)
+                    recommendation_details[rec_key]["raw_weight"] += total_weight
 
         if not recommendation_details:
             if self.debug:
@@ -398,11 +398,13 @@ class VisualizationRecommender:
 
         if not results.empty:
             total_possible = sum(weights.values())
-            results['ensemble_score'] = results['raw_weight'] / total_possible
-            results['ensemble_score'] = results['ensemble_score'].round(2)
-            results['model_agreement'] = results['source_models'].apply(len)
-            results = results.sort_values(['ensemble_score', 'model_agreement'], ascending=[
-                                          False, False]).reset_index(drop=True)
+            results["ensemble_score"] = results["raw_weight"] / total_possible if total_possible else 0.0
+            results["ensemble_score"] = results["ensemble_score"].round(2)
+            results["model_agreement"] = results["source_models"].apply(len)
+            results = results.sort_values(
+                ["ensemble_score", "model_agreement"],
+                ascending=[False, False]
+            ).reset_index(drop=True)
             return results[output_columns]
 
         return pd.DataFrame(columns=output_columns)
@@ -424,7 +426,7 @@ class VisualizationRecommender:
                 col_type = "datetime"
             elif pd.api.types.is_numeric_dtype(self.df[col]):
                 col_type = "numerical"
-            elif self.df[col].nunique() / len(self.df[col]) < 0.05:  # Low cardinality
+            elif self.df[col].nunique() / len(self.df[col]) < 0.05:
                 col_type = "categorical"
             else:
                 col_type = "text/other"
@@ -432,17 +434,14 @@ class VisualizationRecommender:
             # Basic info
             unique_count = self.df[col].nunique()
             sample_values = self.df[col].dropna().head(sample_size).tolist()
-            desc.append(
-                f"- {col}: {col_type} ({unique_count} unique values), sample: {sample_values}")
+            desc.append(f"- {col}: {col_type} ({unique_count} unique values), sample: {sample_values}")
 
             # Add stats for numerical/datetime
             if col_type == "numerical":
                 desc.append(
-                    f"  Stats: min={
-                        self.df[col].min()}, max={
-                        self.df[col].max()}, " f"mean={
-                        self.df[col].mean():.2f}, missing={
-                        self.df[col].isna().sum()}")
+                    f"  Stats: min={self.df[col].min()}, max={self.df[col].max()}, "
+                    f"mean={self.df[col].mean():.2f}, missing={self.df[col].isna().sum()}"
+                )
             elif col_type == "datetime":
                 desc.append(
                     f"  Range: {self.df[col].min()} to {self.df[col].max()}, "
@@ -450,18 +449,13 @@ class VisualizationRecommender:
                 )
 
         # --- Relationship Analysis ---
-        numerical_cols = self.df.select_dtypes(
-            include=np.number).columns.tolist()
+        numerical_cols = self.df.select_dtypes(include=np.number).columns.tolist()
         if len(numerical_cols) > 1:
             desc.append("\nNumerical Variable Correlations (Pearson):")
             corr = self.df[numerical_cols].corr().round(2)
             desc.append(str(corr))
 
-        # Categorical-numerical potential groupings
-        categorical_cols = [
-            col for col in self.df.columns
-            if self.df[col].nunique() / len(self.df[col]) < 0.05
-        ]
+        categorical_cols = [col for col in self.df.columns if self.df[col].nunique() / len(self.df[col]) < 0.05]
         if categorical_cols and numerical_cols:
             desc.append("\nPotential Groupings (categorical vs numerical):")
             desc.append(f"  - Could group by: {categorical_cols}")
@@ -485,8 +479,8 @@ class VisualizationRecommender:
 
             CRITICAL VARIABLE ORDERING RULES:
             1. If a suggestion includes both numerical and categorical variables, NUMERICAL VARIABLES MUST COME FIRST.
-            - Correct: "income, gender"
-            - Incorrect: "gender, income"
+               - Correct: "income, gender"
+               - Incorrect: "gender, income"
             2. For plots requiring two numerical variables (e.g., scatter), order by analysis priority (dependent variable first).
             3. For single-variable plots, use natural order (e.g., "age" for a histogram).
 
@@ -548,66 +542,40 @@ class VisualizationRecommender:
 
             Example INCORRECT suggestions (REJECT THESE):
             Plot Type: boxplot
-            Variables: gender, income  # WRONG - categorical listed first
+            Variables: gender, income
             ---
             Plot Type: scatter
-            Variables: price, weight  # WRONG - no clear priority order
+            Variables: price, weight
             Rationale: Should specify independent/dependent variable order
         """)
 
     def _query_llm(self, prompt: str, model: str) -> str:
-        if not self.clients.get('groq'):
+        if not self.clients.get("groq"):
             raise ValueError("Groq client not initialized")
-
         try:
-            response = self.clients['groq'].chat.completions.create(
+            response = self.clients["groq"].chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.4,
                 max_tokens=1000,
-                timeout=self.timeout
+                timeout=self.timeout,
             )
             return response.choices[0].message.content
         except Exception as e:
             raise RuntimeError(f"Groq API query failed for {model}: {str(e)}")
 
-    def _validate_variable_order(
-            self, recommendations: pd.DataFrame) -> pd.DataFrame:
-        """
-        Validate and correct the order of variables in recommendations,
-        ensuring numerical variables come first.
-
-        Args:
-            recommendations: DataFrame of visualization recommendations
-
-        Returns:
-            DataFrame with corrected variable order
-        """
+    def _validate_variable_order(self, recommendations: pd.DataFrame) -> pd.DataFrame:
+        """Ensure datetime/numerical vars come before non-numerical in 'variables'."""
         def _reorder_variables(row):
-            # Split variables
-            variables = [var.strip() for var in row['variables'].split(',')]
+            variables = [var.strip() for var in row["variables"].split(",")]
 
-            # Identify numerical and non-numerical variables
-            numerical_vars = [
-                var for var in variables
-                if pd.api.types.is_numeric_dtype(self.df[var])
-            ]
-
-            date_vars = [
-                var for var in variables
-                if pd.api.types.is_datetime64_any_dtype(self.df[var])
-            ]
-
-            non_numerical_vars = [
-                var for var in variables
-                if var not in numerical_vars and var not in date_vars
-            ]
+            numerical_vars = [var for var in variables if pd.api.types.is_numeric_dtype(self.df[var])]
+            date_vars = [var for var in variables if pd.api.types.is_datetime64_any_dtype(self.df[var])]
+            non_numerical_vars = [var for var in variables if var not in numerical_vars and var not in date_vars]
 
             # Combine with numerical variables first
             corrected_vars = date_vars + numerical_vars + non_numerical_vars
-
-            # Update the row with corrected variable order
-            row['variables'] = ', '.join(corrected_vars)
+            row["variables"] = ", ".join(corrected_vars)
             return row
 
         # Apply reordering
@@ -616,58 +584,45 @@ class VisualizationRecommender:
 
         if self.debug:
             print("\n[DEBUG] Variable Order Validation:")
-            for orig, corrected in zip(
-                    recommendations['variables'], corrected_recommendations['variables']):
-                if orig != corrected:
-                    print(f"  Corrected: {orig} → {corrected}")
+            for orig, corrected_vars in zip(recommendations["variables"], corrected["variables"]):
+                if orig != corrected_vars:
+                    print(f"  Corrected: {orig} → {corrected_vars}")
 
-        return corrected_recommendations
+        return corrected
 
     def _parse_recommendations(self, response: str, model: str) -> List[Dict]:
-        """Parse the LLM response into structured recommendations"""
-        recommendations = []
-
-        # Split response into recommendation blocks
-        blocks = [b.strip() for b in response.split('---') if b.strip()]
+        """Parse the LLM response into structured recommendations."""
+        recommendations: List[Dict] = []
+        blocks = [b.strip() for b in response.split("---") if b.strip()]
 
         if self.debug:
             print(f"\n[DEBUG] Parsing {len(blocks)} blocks from {model}")
 
         for block in blocks:
-            lines = [line.strip()
-                     for line in block.split('\n') if line.strip()]
+            lines = [line.strip() for line in block.split("\n") if line.strip()]
             if not lines:
                 continue
 
             try:
-                rec = {'source_model': model}
+                rec = {"source_model": model}
                 for line in lines:
-                    if line.lower().startswith('plot type:'):
-                        rec['plot_type'] = line.split(
-                            ':', 1)[1].strip().lower()
-                    elif line.lower().startswith('variables:'):
-                        raw_vars = line.split(':', 1)[1].strip()
-                        # Filter variables to only those that exist in
-                        # DataFrame
-                        variables = [v.strip() for v in raw_vars.split(
-                            ',') if v.strip() in self.df.columns]
-                        rec['variables'] = ', '.join(
-                            [var for var in variables if var in self.df.columns])
-                        # rec['variables'] = self._reorder_variables(',
-                        # '.join(variables))  # Keep original order for now
-
-                if 'plot_type' in rec and 'variables' in rec and rec['variables']:
+                    if line.lower().startswith("plot type:"):
+                        rec["plot_type"] = line.split(":", 1)[1].strip().lower()
+                    elif line.lower().startswith("variables:"):
+                        raw_vars = line.split(":", 1)[1].strip()
+                        vars_list = [v.strip() for v in raw_vars.split(",") if v.strip() in self.df.columns]
+                        rec["variables"] = ", ".join(vars_list)
+                if "plot_type" in rec and rec.get("variables"):
                     recommendations.append(rec)
             except Exception as e:
-                warnings.warn(
-                    f"Failed to parse recommendation from {model}: {str(e)}")
+                warnings.warn(f"Failed to parse recommendation from {model}: {str(e)}")
                 continue
 
         return recommendations
 
 
 # Package-level convenience function
-_recommender_instance = None
+_recommender_instance: Optional[VisualizationRecommender] = None
 
 
 def recommender(
@@ -675,7 +630,7 @@ def recommender(
     n: int = 5,
     api_keys: dict = {},
     custom_weights: Optional[Dict[str, float]] = None,
-    debug: bool = False
+    debug: bool = False,
 ) -> pd.DataFrame:
     """
     Generate visualization recommendations using weighted ensemble of LLMs.
@@ -692,11 +647,9 @@ def recommender(
     """
     global _recommender_instance
     if _recommender_instance is None:
-        _recommender_instance = VisualizationRecommender(
-            api_keys=api_keys, debug=debug)
-
+        _recommender_instance = VisualizationRecommender(api_keys=api_keys, debug=debug)
     _recommender_instance.set_dataframe(df)
     return _recommender_instance.recommend_visualizations(
         n=n,
-        custom_weights=custom_weights
+        custom_weights=custom_weights,
     )
