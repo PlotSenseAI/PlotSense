@@ -84,8 +84,7 @@ class VisualizationRecommender:
                         link = service_links.get(
                             service, f"the {service.upper()} website")
                         message = (
-                            f"Enter {
-                                service.upper()} API key (get it at {link}): ")
+                            f"Enter {service.upper()} API key (get it at {link}): ")
                         self.api_keys[service] = builtins.input(
                             message).strip()
                         if not self.api_keys[service]:
