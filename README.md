@@ -1,5 +1,7 @@
 # 🌟 PlotSense: AI-Powered Data Visualization Assistant
 
+[![PyPI version](https://img.shields.io/pypi/v/plotsense.svg)](https://pypi.org/project/plotsense/)
+[![Downloads](https://static.pepy.tech/badge/plotsense)](https://pepy.tech/project/plotsense)
 [![Python Tests](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/python-tests.yml/badge.svg)](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/python-tests.yml)
 [![Frontend Tests](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/frontend-tests.yml)
 [![codecov](https://codecov.io/gh/PlotSenseAI/PlotSenseAI/branch/main/graph/badge.svg)](https://codecov.io/gh/PlotSenseAI/PlotSenseAI)
