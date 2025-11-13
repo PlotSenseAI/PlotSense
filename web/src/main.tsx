@@ -12,4 +12,8 @@ createRoot(document.getElementById('root')!).render(
 )
 
 // initialize analytics after app mounts
-initAnalytics((import.meta as any).env?.VITE_GA_ID || (env as any).analytics?.gaId || import.meta.env.VITE_GA_ID)
+const gaId = import.meta.env.VITE_GA_ID ||
+  (typeof env === 'object' && env !== null && 'analytics' in env &&
+   typeof env.analytics === 'object' && env.analytics !== null &&
+   'gaId' in env.analytics ? env.analytics.gaId : undefined);
+initAnalytics(gaId as string | undefined);
