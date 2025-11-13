@@ -5,8 +5,8 @@
  * for testing React components with common providers and setup.
  */
 
-import { ReactElement } from 'react'
-import { render, RenderOptions } from '@testing-library/react'
+import type { ReactElement } from 'react'
+import { render, type RenderOptions } from '@testing-library/react'
 
 /**
  * Custom render function that wraps components with common providers
@@ -21,7 +21,7 @@ import { render, RenderOptions } from '@testing-library/react'
  * })
  * ```
  */
-interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+type CustomRenderOptions = Omit<RenderOptions, 'wrapper'> & {
   // Add custom options here as needed
 }
 
@@ -44,5 +44,6 @@ export function renderWithProviders(
 }
 
 // Re-export everything from testing library
+// eslint-disable-next-line react-refresh/only-export-components
 export * from '@testing-library/react'
 export { renderWithProviders as render }

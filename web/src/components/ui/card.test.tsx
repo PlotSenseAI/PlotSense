@@ -30,8 +30,8 @@ describe('Card Components', () => {
     })
 
     it('should forward ref', () => {
-      const ref = { current: null }
-      render(<Card ref={ref as any}>Content</Card>)
+      const ref = { current: null as HTMLDivElement | null }
+      render(<Card ref={ref}>Content</Card>)
       expect(ref.current).toBeTruthy()
     })
 

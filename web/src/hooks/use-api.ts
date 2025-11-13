@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '@/utils/api';
 import type { ApiResponse } from '@/types';
 
@@ -14,7 +14,7 @@ export const useApi = <T>(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const execute = async (): Promise<ApiResponse<T>> => {
+  const execute = useCallback(async (): Promise<ApiResponse<T>> => {
     setLoading(true);
     setError(null);
 
@@ -40,13 +40,13 @@ export const useApi = <T>(
     } finally {
       setLoading(false);
     }
-  };
+  }, [endpoint]);
 
   useEffect(() => {
     if (options.immediate) {
       execute();
     }
-  }, [endpoint, options.immediate]);
+  }, [execute, options.immediate]);
 
   return {
     data,

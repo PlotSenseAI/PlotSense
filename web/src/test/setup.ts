@@ -5,7 +5,7 @@
  */
 
 import '@testing-library/jest-dom'
-import { expect, afterEach, vi } from 'vitest'
+import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 
 // Cleanup after each test case (e.g., clearing jsdom)
@@ -28,7 +28,7 @@ global.IntersectionObserver = class IntersectionObserver {
     return []
   }
   unobserve() {}
-} as any
+} as unknown as typeof global.IntersectionObserver
 
 // Mock window.matchMedia (for responsive components)
 Object.defineProperty(window, 'matchMedia', {
