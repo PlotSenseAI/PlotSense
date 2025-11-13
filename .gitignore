@@ -1,11 +1,48 @@
+# Virtual environments
 /venv
+/.venv
+venv/
+env/
+ENV/
+
+# Environment variables
 .env
 *.env
-/__pycache__
-/.venv
-*.egg-info
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+*.egg-info/
 *.egg
-*.pyc
-*.pyo
-*.pyd
+build/
+dist/
+wheels/
+*.whl
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+test_logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
 *.db
+*.sqlite
+*.sqlite3
