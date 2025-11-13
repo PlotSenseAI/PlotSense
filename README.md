@@ -1,5 +1,7 @@
 # 🌟 PlotSense: AI-Powered Data Visualization Assistant
 
+[![PyPI version](https://img.shields.io/pypi/v/plotsense.svg)](https://pypi.org/project/plotsense/)
+[![Downloads](https://static.pepy.tech/badge/plotsense)](https://pepy.tech/project/plotsense)
 [![Python Tests](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/python-tests.yml/badge.svg)](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/python-tests.yml)
 [![Frontend Tests](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/PlotSenseAI/PlotSenseAI/actions/workflows/frontend-tests.yml)
 [![codecov](https://codecov.io/gh/PlotSenseAI/PlotSenseAI/branch/main/graph/badge.svg)](https://codecov.io/gh/PlotSenseAI/PlotSenseAI)
@@ -239,6 +241,24 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ``` bash
 pip install --upgrade plotsense  # Get the latest features!
 ```
+
+## 👥 Maintainers
+
+PlotSense is maintained by a dedicated team of developers and data scientists:
+
+| Name | GitHub | Email |
+|------|--------|-------|
+| **Christian Chimezie** | [@christianchimezie](https://github.com/christianchimezie) | chimeziechristiancc@gmail.com |
+| **Toluwaleke Ogidan** | [@T-leke](https://github.com/T-leke) | gbemilekeogidan@gmail.com |
+| **Onyekachukwu Ojumah** | [@ojumah20](https://github.com/ojumah20) | Onyekaojumah22@gmail.com |
+| **Grace Farayola** | [@Itsmeright](https://github.com/Itsmeright) | gracefarayola@gmail.com |
+| **Amaka Iduwe** | [@Nwaamaka-Iduwe](https://github.com/Nwaamaka-Iduwe) | nwaamaka_iduwe@yahoo.com |
+| **Nelson Ogbeide** | [@Nelsonchris1](https://github.com/Nelsonchris1) | Ogbeide331@gmail.com |
+| **Abayomi Olagunju** | [@jerryola1](https://github.com/jerryola1) | https://abayomiolagunju.net/|
+| **Olamilekan Ajao** | [@olamilekanajao](https://github.com/olamilekanajao) | olamilekan011@gmail.com |
+
+We welcome contributions from the community! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## 🛡 License
 Apache License 2.0
 
