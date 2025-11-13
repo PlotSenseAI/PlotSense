@@ -206,8 +206,7 @@ class VisualizationRecommender:
         if len(ensemble_results) < n:
             if self.debug:
                 print(
-                    f"\n[DEBUG] Only got {
-                        len(ensemble_results)} recommendations, trying to supplement")
+                    f"\n[DEBUG] Only got {len(ensemble_results)} recommendations, trying to supplement")
             return self._supplement_recommendations(ensemble_results, n)
 
         if self.debug:
@@ -253,15 +252,13 @@ class VisualizationRecommender:
 
             if self.debug:
                 print(
-                    f"\n[DEBUG] Supplemented with {
-                        len(new_recs)} new recommendations")
+                    f"\n[DEBUG] Supplemented with {len(new_recs)} new recommendations")
 
             return combined.head(target)
         except Exception as e:
             if self.debug:
                 print(
-                    f"\n[WARNING] Couldn't supplement recommendations: {
-                        str(e)}")
+                    f"\n[WARNING] Couldn't supplement recommendations: {str(e)}")
             return existing.head(target)  # Return what we have
 
     def _get_all_recommendations(self) -> Dict[str, List[Dict]]:
@@ -297,12 +294,10 @@ class VisualizationRecommender:
                     all_recommendations[model] = result
                     if self.debug:
                         print(
-                            f"\n[DEBUG] Got {
-                                len(result)} recommendations from {model}")
+                            f"\n[DEBUG] Got {len(result)} recommendations from {model}")
                 except Exception as e:
                     warnings.warn(
-                        f"Failed to get recommendations from {model}: {
-                            str(e)}")
+                        f"Failed to get recommendations from {model}: {str(e)}")
                     if self.debug:
                         print(f"\n[ERROR] Failed to process {model}: {str(e)}")
 
@@ -326,8 +321,7 @@ class VisualizationRecommender:
             warnings.warn(f"Error processing model {model}: {str(e)}")
             if self.debug:
                 print(
-                    f"\n[ERROR] Failed to parse response from {model}: {
-                        str(e)}")
+                    f"\n[ERROR] Failed to parse response from {model}: {str(e)}")
             return []
 
     def _apply_ensemble_scoring(self,
@@ -437,11 +431,8 @@ class VisualizationRecommender:
             # Add stats for numerical/datetime
             if col_type == "numerical":
                 desc.append(
-                    f"  Stats: min={
-                        self.df[col].min()}, max={
-                        self.df[col].max()}, " f"mean={
-                        self.df[col].mean():.2f}, missing={
-                        self.df[col].isna().sum()}")
+                    f"  Stats: min={self.df[col].min()}, max={self.df[col].max()}, "
+                    f"mean={self.df[col].mean():.2f}, missing={self.df[col].isna().sum()}")
             elif col_type == "datetime":
                 desc.append(
                     f"  Range: {self.df[col].min()} to {self.df[col].max()}, "
