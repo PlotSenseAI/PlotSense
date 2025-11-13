@@ -29,6 +29,7 @@ np.random.seed(SEED)
 # Session-level fixtures (shared across all tests)
 # ============================================================================
 
+
 @pytest.fixture(scope="session")
 def test_api_key():
     """Provide a test API key for testing."""
