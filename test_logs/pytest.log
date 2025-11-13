@@ -390,12 +390,12 @@ DEBUG    matplotlib.font_manager:font_manager.py:1483 findfont: score(FontEntry(
 DEBUG    matplotlib.font_manager:font_manager.py:1483 findfont: score(FontEntry(fname='C:\\Windows\\Fonts\\ntailu.ttf', name='Microsoft New Tai Lue', style='normal', variant='normal', weight=400, stretch='normal', size='scalable')) = 10.05
 DEBUG    matplotlib.font_manager:font_manager.py:1483 findfont: score(FontEntry(fname='C:\\Windows\\Fonts\\BOD_BI.TTF', name='Bodoni MT', style='italic', variant='normal', weight=700, stretch='normal', size='scalable')) = 11.335
 DEBUG    matplotlib.font_manager:font_manager.py:1515 findfont: Matching sans\-serif:style=normal:variant=normal:weight=normal:stretch=normal:size=10.0 to DejaVu Sans ('C:\\Users\\chime\\PlotSense_Recloned\\PlotSenseAI\\venv\\Lib\\site-packages\\matplotlib\\mpl-data\\fonts\\ttf\\DejaVuSans.ttf') with score of 0.050000.
-DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x0000021EDB1F2650>
-DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x0000021EDB218E50>
-DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x0000021EDB1D4FC0>
-DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x0000021EDD5AEC30>
-DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x0000021EDD6D87A0>
-DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x0000021EDD5AD7F0>
+DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x000001C0EF2FA9E0>
+DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x000001C0EF324D50>
+DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x000001C0EF3BB1E0>
+DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x000001C0F1501640>
+DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x000001C0F186ED50>
+DEBUG    matplotlib.colorbar:colorbar.py:867 locator: <matplotlib.ticker.AutoLocator object at 0x000001C0F1502B10>
 INFO     matplotlib.category:category.py:224 Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
 INFO     matplotlib.category:category.py:224 Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
 INFO     matplotlib.category:category.py:224 Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
@@ -406,29 +406,23 @@ DEBUG    groq._base_client:_base_client.py:950 Sending HTTP Request: POST https:
 DEBUG    httpcore.connection:_trace.py:47 connect_tcp.started host='api.groq.com' port=443 local_address=None timeout=30 socket_options=None
 DEBUG    groq._base_client:_base_client.py:950 Sending HTTP Request: POST https://api.groq.com/openai/v1/chat/completions
 DEBUG    httpcore.connection:_trace.py:47 connect_tcp.started host='api.groq.com' port=443 local_address=None timeout=30 socket_options=None
-DEBUG    httpcore.connection:_trace.py:47 connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x0000021EDB202A50>
-DEBUG    httpcore.connection:_trace.py:47 start_tls.started ssl_context=<ssl.SSLContext object at 0x0000021EDD9696D0> server_hostname='api.groq.com' timeout=30
-DEBUG    httpcore.connection:_trace.py:47 connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x0000021EDD76D590>
-DEBUG    httpcore.connection:_trace.py:47 start_tls.started ssl_context=<ssl.SSLContext object at 0x0000021EDD9696D0> server_hostname='api.groq.com' timeout=30
-DEBUG    httpcore.connection:_trace.py:47 start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x0000021EDD76D810>
+DEBUG    httpcore.connection:_trace.py:47 connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001C0EAE5F8C0>
+DEBUG    httpcore.connection:_trace.py:47 start_tls.started ssl_context=<ssl.SSLContext object at 0x000001C0F1524230> server_hostname='api.groq.com' timeout=30
+DEBUG    httpcore.connection:_trace.py:47 connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001C0EF2EF4D0>
+DEBUG    httpcore.connection:_trace.py:47 start_tls.started ssl_context=<ssl.SSLContext object at 0x000001C0F1524230> server_hostname='api.groq.com' timeout=30
+DEBUG    httpcore.connection:_trace.py:47 start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001C0EF2ECCD0>
 DEBUG    httpcore.http11:_trace.py:47 send_request_headers.started request=<Request [b'POST']>
 DEBUG    httpcore.http11:_trace.py:47 send_request_headers.complete
 DEBUG    httpcore.http11:_trace.py:47 send_request_body.started request=<Request [b'POST']>
 DEBUG    httpcore.http11:_trace.py:47 send_request_body.complete
 DEBUG    httpcore.http11:_trace.py:47 receive_response_headers.started request=<Request [b'POST']>
-DEBUG    httpcore.connection:_trace.py:47 start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x0000021EDB15AEA0>
-DEBUG    httpcore.http11:_trace.py:47 send_request_headers.started request=<Request [b'POST']>
-DEBUG    httpcore.http11:_trace.py:47 send_request_headers.complete
-DEBUG    httpcore.http11:_trace.py:47 send_request_body.started request=<Request [b'POST']>
-DEBUG    httpcore.http11:_trace.py:47 send_request_body.complete
-DEBUG    httpcore.http11:_trace.py:47 receive_response_headers.started request=<Request [b'POST']>
-DEBUG    httpcore.http11:_trace.py:47 receive_response_headers.complete return_value=(b'HTTP/1.1', 401, b'Unauthorized', [(b'Date', b'Thu, 13 Nov 2025 17:30:36 GMT'), (b'Content-Type', b'application/json'), (b'Content-Length', b'96'), (b'Connection', b'keep-alive'), (b'Cache-Control', b'private, max-age=0, no-store, no-cache, must-revalidate'), (b'Server', b'cloudflare'), (b'vary', b'Origin'), (b'x-groq-region', b'fra'), (b'x-request-id', b'req_01k9z49t34e9wbdfvt707vagcc'), (b'via', b'1.1 google'), (b'cf-cache-status', b'DYNAMIC'), (b'Set-Cookie', b'__cf_bm=US6dKc.LULURQ0yo3UfQBN8CjC3mgznDhmpTJ2Qmg9g-1763055036.5018919-1.0.1.1-izf3h9T8IDKoYn49u9hNfDLIqc6C2TcKlkyQfh2NevIrsc8LPkQdJz5GXe2_No_NkFXeQkamIKOmMGGzJB9y7i0D3ARQSZ2L28.yXi9MTA8J4oOXCHe4DoCJbgzStyqb; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:00:36 GMT'), (b'CF-RAY', b'99dfff7a2f2cf653-LHR'), (b'alt-svc', b'h3=":443"; ma=86400')])
+DEBUG    httpcore.http11:_trace.py:47 receive_response_headers.complete return_value=(b'HTTP/1.1', 401, b'Unauthorized', [(b'Date', b'Thu, 13 Nov 2025 17:37:03 GMT'), (b'Content-Type', b'application/json'), (b'Content-Length', b'96'), (b'Connection', b'keep-alive'), (b'Cache-Control', b'private, max-age=0, no-store, no-cache, must-revalidate'), (b'Server', b'cloudflare'), (b'vary', b'Origin'), (b'x-groq-region', b'fra'), (b'x-request-id', b'req_01k9z4nkjde4st09n44hm8tjp8'), (b'via', b'1.1 google'), (b'cf-cache-status', b'DYNAMIC'), (b'Set-Cookie', b'__cf_bm=LVIaRobBN1PJhPWpI_ThvnipI4NTlMKRzTAG5nq1.0A-1763055423.0405674-1.0.1.1-Konb9eRsioMJnK67NHofpA6A7sjR9MgG62u.Tb42zkBDIu1nKbs3.JE3dod.mQWgjy6vB9FdPE0BFHzYIDfbUmFfESqT4aiTP25hsePNe8MKs4Z_f7L1sZ2J5rf1j_5Q; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:07:03 GMT'), (b'CF-RAY', b'99e008e9f9e3593c-LHR'), (b'alt-svc', b'h3=":443"; ma=86400')])
 INFO     httpx:_client.py:1025 HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 401 Unauthorized"
 DEBUG    httpcore.http11:_trace.py:47 receive_response_body.started request=<Request [b'POST']>
 DEBUG    httpcore.http11:_trace.py:47 receive_response_body.complete
 DEBUG    httpcore.http11:_trace.py:47 response_closed.started
 DEBUG    httpcore.http11:_trace.py:47 response_closed.complete
-DEBUG    groq._base_client:_base_client.py:989 HTTP Response: POST https://api.groq.com/openai/v1/chat/completions "401 Unauthorized" Headers({'date': 'Thu, 13 Nov 2025 17:30:36 GMT', 'content-type': 'application/json', 'content-length': '96', 'connection': 'keep-alive', 'cache-control': 'private, max-age=0, no-store, no-cache, must-revalidate', 'server': 'cloudflare', 'vary': 'Origin', 'x-groq-region': 'fra', 'x-request-id': 'req_01k9z49t34e9wbdfvt707vagcc', 'via': '1.1 google', 'cf-cache-status': 'DYNAMIC', 'set-cookie': '__cf_bm=US6dKc.LULURQ0yo3UfQBN8CjC3mgznDhmpTJ2Qmg9g-1763055036.5018919-1.0.1.1-izf3h9T8IDKoYn49u9hNfDLIqc6C2TcKlkyQfh2NevIrsc8LPkQdJz5GXe2_No_NkFXeQkamIKOmMGGzJB9y7i0D3ARQSZ2L28.yXi9MTA8J4oOXCHe4DoCJbgzStyqb; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:00:36 GMT', 'cf-ray': '99dfff7a2f2cf653-LHR', 'alt-svc': 'h3=":443"; ma=86400'})
+DEBUG    groq._base_client:_base_client.py:989 HTTP Response: POST https://api.groq.com/openai/v1/chat/completions "401 Unauthorized" Headers({'date': 'Thu, 13 Nov 2025 17:37:03 GMT', 'content-type': 'application/json', 'content-length': '96', 'connection': 'keep-alive', 'cache-control': 'private, max-age=0, no-store, no-cache, must-revalidate', 'server': 'cloudflare', 'vary': 'Origin', 'x-groq-region': 'fra', 'x-request-id': 'req_01k9z4nkjde4st09n44hm8tjp8', 'via': '1.1 google', 'cf-cache-status': 'DYNAMIC', 'set-cookie': '__cf_bm=LVIaRobBN1PJhPWpI_ThvnipI4NTlMKRzTAG5nq1.0A-1763055423.0405674-1.0.1.1-Konb9eRsioMJnK67NHofpA6A7sjR9MgG62u.Tb42zkBDIu1nKbs3.JE3dod.mQWgjy6vB9FdPE0BFHzYIDfbUmFfESqT4aiTP25hsePNe8MKs4Z_f7L1sZ2J5rf1j_5Q; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:07:03 GMT', 'cf-ray': '99e008e9f9e3593c-LHR', 'alt-svc': 'h3=":443"; ma=86400'})
 DEBUG    groq._base_client:_base_client.py:1001 Encountered httpx.HTTPStatusError
 Traceback (most recent call last):
   File "C:\Users\chime\PlotSense_Recloned\PlotSenseAI\venv\Lib\site-packages\groq\_base_client.py", line 999, in _request
@@ -440,13 +434,19 @@ httpx.HTTPStatusError: Client error '401 Unauthorized' for url 'https://api.groq
 For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
 DEBUG    groq._base_client:_base_client.py:741 Not retrying
 DEBUG    groq._base_client:_base_client.py:1019 Re-raising status error
-DEBUG    httpcore.http11:_trace.py:47 receive_response_headers.complete return_value=(b'HTTP/1.1', 401, b'Unauthorized', [(b'Date', b'Thu, 13 Nov 2025 17:30:36 GMT'), (b'Content-Type', b'application/json'), (b'Content-Length', b'96'), (b'Connection', b'keep-alive'), (b'Cache-Control', b'private, max-age=0, no-store, no-cache, must-revalidate'), (b'Server', b'cloudflare'), (b'vary', b'Origin'), (b'x-groq-region', b'fra'), (b'x-request-id', b'req_01k9z49t41f5nah8cmsybnrfb1'), (b'via', b'1.1 google'), (b'cf-cache-status', b'DYNAMIC'), (b'Set-Cookie', b'__cf_bm=uDALpz9hjUiw2hu1Ubfw9rYuFkReSrwicEvWILhqgYs-1763055036.523351-1.0.1.1-XQe3XA6ru2w1TzXJRNizOl9j_wuzffCWSmdX0VgQJq4W5AmcT3eDHqDva4lgaIDFZVMn9g.vQWNRnOYno41YYL10Mtq4PnR4fMQ7400li5jkP0Zh.Jn9wv2gum4HEkt7; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:00:36 GMT'), (b'CF-RAY', b'99dfff7a4dc463e3-LHR'), (b'alt-svc', b'h3=":443"; ma=86400')])
+DEBUG    httpcore.connection:_trace.py:47 start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x000001C0EF2FBE10>
+DEBUG    httpcore.http11:_trace.py:47 send_request_headers.started request=<Request [b'POST']>
+DEBUG    httpcore.http11:_trace.py:47 send_request_headers.complete
+DEBUG    httpcore.http11:_trace.py:47 send_request_body.started request=<Request [b'POST']>
+DEBUG    httpcore.http11:_trace.py:47 send_request_body.complete
+DEBUG    httpcore.http11:_trace.py:47 receive_response_headers.started request=<Request [b'POST']>
+DEBUG    httpcore.http11:_trace.py:47 receive_response_headers.complete return_value=(b'HTTP/1.1', 401, b'Unauthorized', [(b'Date', b'Thu, 13 Nov 2025 17:37:03 GMT'), (b'Content-Type', b'application/json'), (b'Content-Length', b'96'), (b'Connection', b'keep-alive'), (b'Cache-Control', b'private, max-age=0, no-store, no-cache, must-revalidate'), (b'Server', b'cloudflare'), (b'vary', b'Origin'), (b'x-groq-region', b'fra'), (b'x-request-id', b'req_01k9z4nkscfq8anrv8baxgrwm0'), (b'via', b'1.1 google'), (b'cf-cache-status', b'DYNAMIC'), (b'Set-Cookie', b'__cf_bm=pp8dX29TH8wbgOphZua71qlVOIQHnCiDD.R81mnj9Zw-1763055423.2502484-1.0.1.1-Lv7NTiG06vhIzlPmWQtKR2.fAfxBsdrvTcJtmQilI29xavsa7hqAHAvgRNTSuC5x2S17.HDx6yyl_pC3l5ZjoHuZrp4JcN1E30YHcyKbo.fW9Y5YLKqtto7BGqQoujl6; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:07:03 GMT'), (b'CF-RAY', b'99e008eb4aa7942b-LHR'), (b'alt-svc', b'h3=":443"; ma=86400')])
 INFO     httpx:_client.py:1025 HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 401 Unauthorized"
 DEBUG    httpcore.http11:_trace.py:47 receive_response_body.started request=<Request [b'POST']>
 DEBUG    httpcore.http11:_trace.py:47 receive_response_body.complete
 DEBUG    httpcore.http11:_trace.py:47 response_closed.started
 DEBUG    httpcore.http11:_trace.py:47 response_closed.complete
-DEBUG    groq._base_client:_base_client.py:989 HTTP Response: POST https://api.groq.com/openai/v1/chat/completions "401 Unauthorized" Headers({'date': 'Thu, 13 Nov 2025 17:30:36 GMT', 'content-type': 'application/json', 'content-length': '96', 'connection': 'keep-alive', 'cache-control': 'private, max-age=0, no-store, no-cache, must-revalidate', 'server': 'cloudflare', 'vary': 'Origin', 'x-groq-region': 'fra', 'x-request-id': 'req_01k9z49t41f5nah8cmsybnrfb1', 'via': '1.1 google', 'cf-cache-status': 'DYNAMIC', 'set-cookie': '__cf_bm=uDALpz9hjUiw2hu1Ubfw9rYuFkReSrwicEvWILhqgYs-1763055036.523351-1.0.1.1-XQe3XA6ru2w1TzXJRNizOl9j_wuzffCWSmdX0VgQJq4W5AmcT3eDHqDva4lgaIDFZVMn9g.vQWNRnOYno41YYL10Mtq4PnR4fMQ7400li5jkP0Zh.Jn9wv2gum4HEkt7; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:00:36 GMT', 'cf-ray': '99dfff7a4dc463e3-LHR', 'alt-svc': 'h3=":443"; ma=86400'})
+DEBUG    groq._base_client:_base_client.py:989 HTTP Response: POST https://api.groq.com/openai/v1/chat/completions "401 Unauthorized" Headers({'date': 'Thu, 13 Nov 2025 17:37:03 GMT', 'content-type': 'application/json', 'content-length': '96', 'connection': 'keep-alive', 'cache-control': 'private, max-age=0, no-store, no-cache, must-revalidate', 'server': 'cloudflare', 'vary': 'Origin', 'x-groq-region': 'fra', 'x-request-id': 'req_01k9z4nkscfq8anrv8baxgrwm0', 'via': '1.1 google', 'cf-cache-status': 'DYNAMIC', 'set-cookie': '__cf_bm=pp8dX29TH8wbgOphZua71qlVOIQHnCiDD.R81mnj9Zw-1763055423.2502484-1.0.1.1-Lv7NTiG06vhIzlPmWQtKR2.fAfxBsdrvTcJtmQilI29xavsa7hqAHAvgRNTSuC5x2S17.HDx6yyl_pC3l5ZjoHuZrp4JcN1E30YHcyKbo.fW9Y5YLKqtto7BGqQoujl6; HttpOnly; Secure; Path=/; Domain=groq.com; Expires=Thu, 13 Nov 2025 18:07:03 GMT', 'cf-ray': '99e008eb4aa7942b-LHR', 'alt-svc': 'h3=":443"; ma=86400'})
 DEBUG    groq._base_client:_base_client.py:1001 Encountered httpx.HTTPStatusError
 Traceback (most recent call last):
   File "C:\Users\chime\PlotSense_Recloned\PlotSenseAI\venv\Lib\site-packages\groq\_base_client.py", line 999, in _request
