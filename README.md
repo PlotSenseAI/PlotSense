@@ -241,6 +241,23 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ``` bash
 pip install --upgrade plotsense  # Get the latest features!
 ```
+
+## 👥 Maintainers
+
+PlotSense is maintained by a dedicated team of developers and data scientists:
+
+| Name | GitHub | Email |
+|------|--------|-------|
+| **Christian Chimezie** | [@christianchimezie](https://github.com/christianchimezie) | chimeziechristiancc@gmail.com |
+| **Toluwaleke Ogidan** | [@ToluGbemi](https://github.com/ToluGbemi) | gbemilekeogidan@gmail.com |
+| **Grace Farayola** | [@gracefarayola](https://github.com/gracefarayola) | gracefarayola@gmail.com |
+| **Amaka Iduwe** | [@nwaamakaIduwe](https://github.com/nwaamakaIduwe) | nwaamaka_iduwe@yahoo.com |
+| **Nelson Ogbeide** | [@nelsonogbeide](https://github.com/nelsonogbeide) | Ogbeide331@gmail.com |
+| **Onyekachukwu Ojumah** | [@OnyekaOjumah](https://github.com/OnyekaOjumah) | Onyekaojumah22@gmail.com |
+| **Olamilekan Ajao** | [@olamilekanajao](https://github.com/olamilekanajao) | olamilekan011@gmail.com |
+
+We welcome contributions from the community! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
 ## 🛡 License
 Apache License 2.0
 
