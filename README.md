@@ -249,11 +249,12 @@ PlotSense is maintained by a dedicated team of developers and data scientists:
 | Name | GitHub | Email |
 |------|--------|-------|
 | **Christian Chimezie** | [@christianchimezie](https://github.com/christianchimezie) | chimeziechristiancc@gmail.com |
-| **Toluwaleke Ogidan** | [@ToluGbemi](https://github.com/ToluGbemi) | gbemilekeogidan@gmail.com |
-| **Grace Farayola** | [@gracefarayola](https://github.com/gracefarayola) | gracefarayola@gmail.com |
-| **Amaka Iduwe** | [@nwaamakaIduwe](https://github.com/nwaamakaIduwe) | nwaamaka_iduwe@yahoo.com |
-| **Nelson Ogbeide** | [@nelsonogbeide](https://github.com/nelsonogbeide) | Ogbeide331@gmail.com |
-| **Onyekachukwu Ojumah** | [@OnyekaOjumah](https://github.com/OnyekaOjumah) | Onyekaojumah22@gmail.com |
+| **Toluwaleke Ogidan** | [@T-leke](https://github.com/T-leke) | gbemilekeogidan@gmail.com |
+| **Onyekachukwu Ojumah** | [@ojumah20](https://github.com/ojumah20) | Onyekaojumah22@gmail.com |
+| **Grace Farayola** | [@Itsmeright](https://github.com/Itsmeright) | gracefarayola@gmail.com |
+| **Amaka Iduwe** | [@Nwaamaka-Iduwe](https://github.com/Nwaamaka-Iduwe) | nwaamaka_iduwe@yahoo.com |
+| **Nelson Ogbeide** | [@Nelsonchris1](https://github.com/Nelsonchris1) | Ogbeide331@gmail.com |
+| **Abayomi Olagunju** | [@jerryola1](https://github.com/jerryola1) | https://abayomiolagunju.net/|
 | **Olamilekan Ajao** | [@olamilekanajao](https://github.com/olamilekanajao) | olamilekan011@gmail.com |
 
 We welcome contributions from the community! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
