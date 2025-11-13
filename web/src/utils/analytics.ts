@@ -39,7 +39,6 @@ export const initAnalytics = async (measurementId: string | undefined): Promise<
     window.gtag('js', new Date());
     window.gtag('config', measurementId, { send_page_view: false, debug_mode: import.meta.env.DEV });
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.info('[analytics] config sent for', measurementId);
     }
     trackPageView();
@@ -48,7 +47,6 @@ export const initAnalytics = async (measurementId: string | undefined): Promise<
     // no-op; failed to load analytics
     // You can log to console for debugging in dev
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.warn('[analytics] failed to initialize', error);
     }
   }
@@ -64,7 +62,6 @@ export const trackPageView = (): void => {
       page_path: window.location.pathname,
     });
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.info('[analytics] page_view', { page_location: pageLocation });
     }
   } catch {
