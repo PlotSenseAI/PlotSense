@@ -89,6 +89,7 @@ class PlotExplainer:
                 self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
             except Exception as e:
                 warnings.warn(f"Could not initialize Groq client: {e}", ImportWarning)
+                raise PlotSenseAPIError(f"Groq client initialization error: {e}")
 
     def _detect_available_models(self):
         """Detect available models based on initialized clients"""
@@ -188,7 +189,7 @@ class PlotExplainer:
     ) -> str:
         """Generate and iteratively refine an explanation of a matplotlib/seaborn plot"""
         if not self.available_models:
-            raise ValueError("No available models detected")
+            raise PlotSenseDataError("No available models detected")
 
         # Save plot to temporary image file
         image_path = self.save_plot_to_image(plot_object, temp_image_path)
