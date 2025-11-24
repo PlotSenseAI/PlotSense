@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from groq import Groq
 import warnings
 import builtins
-from plotsense.exceptions import PlotSenseError, PlotSenseAPIError, PlotSenseDataError, PlotSenseConfigError
+from plotsense.exceptions import PlotSenseAPIError, PlotSenseDataError, PlotSenseConfigError
 
 
 load_dotenv()
