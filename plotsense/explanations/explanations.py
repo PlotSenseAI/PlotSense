@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from groq import Groq
 import warnings
 import builtins
+from plotsense.exceptions import PlotSenseError, PlotSenseAPIError, PlotSenseDataError, PlotSenseConfigError
 
 
 load_dotenv()
@@ -69,12 +70,12 @@ class PlotExplainer:
                         )
                         self.api_keys[service] = builtins.input(message).strip()
                         if not self.api_keys[service]:
-                            raise ValueError(f"{service.upper()} API key is required")
+                            raise PlotSenseDataError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
                         # Handle cases where input is not available
-                        raise ValueError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
+                        raise PlotSenseConfigError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
                 else:
-                    raise ValueError(
+                    raise PlotSenseConfigError(
                         f"{service.upper()} API key is required. "
                         f"Set it in the environment or pass it as an argument. "
                         f"You can get it at {service_links.get(service)}"
