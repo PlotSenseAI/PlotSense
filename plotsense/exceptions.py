@@ -16,4 +16,7 @@ class PlotSenseDataError(ValueError):
 
 class PlotSenseConfigError(KeyError):
     """Errors related to configuration / missing API keys, etc."""
+
+    def __str__(self):
+        return str(self.args[0]) if self.args else super().__str__()
     pass

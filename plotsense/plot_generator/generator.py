@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import List, Dict, Optional, Union
+from plotsense.exceptions import PlotSenseAPIError, PlotSenseDataError, PlotSenseConfigError
 
 
 class PlotGenerator:
@@ -19,15 +20,15 @@ class PlotGenerator:
             suggestions: DataFrame with plot suggestions
         """
         if not isinstance(data, pd.DataFrame):
-            raise TypeError("Data must be a pandas DataFrame")
+            raise PlotSenseDataError("Data must be a pandas DataFrame")
         if data.empty:
-            raise ValueError("DataFrame is empty")
+            raise PlotSenseDataError("DataFrame is empty")
         if not isinstance(suggestions, pd.DataFrame):
-            raise TypeError("Suggestions must be a pandas DataFrame")
+            raise PlotSenseDataError("Suggestions must be a pandas DataFrame")
         if suggestions.empty:
-            raise ValueError("Suggestions DataFrame is empty")
+            raise PlotSenseDataError("Suggestions DataFrame is empty")
         if 'plot_type' not in suggestions.columns or 'variables' not in suggestions.columns:
-            raise ValueError("Suggestions DataFrame must contain 'plot_type' and 'variables' columns")
+            raise PlotSenseDataError("Suggestions DataFrame must contain 'plot_type' and 'variables' columns")
 
         self.data = data.copy()
         self.suggestions = suggestions
@@ -47,21 +48,21 @@ class PlotGenerator:
         # if suggestion_index < 0 or suggestion_index >= len(self.suggestions):
         #     raise IndexError("Suggestion index out of range")
         if not isinstance(suggestion_index, int):
-            raise TypeError("Suggestion index must be an integer")
+            raise PlotSenseDataError("Suggestion index must be an integer")
         if not isinstance(kwargs, dict):
-            raise TypeError("Additional arguments must be provided as a dictionary")
+            raise PlotSenseDataError("Additional arguments must be provided as a dictionary")
         if self.suggestions.empty:
-            raise ValueError("No suggestions available to generate a plot")
+            raise PlotSenseDataError("No suggestions available to generate a plot")
         if self.data.empty:
-            raise ValueError("No data available to generate a plot")
+            raise PlotSenseDataError("No data available to generate a plot")
         if not isinstance(self.suggestions, pd.DataFrame):
-            raise TypeError("Suggestions must be a pandas DataFrame")
+            raise PlotSenseDataError("Suggestions must be a pandas DataFrame")
         if not isinstance(self.data, pd.DataFrame):
-            raise TypeError("Data must be a pandas DataFrame")
+            raise PlotSenseDataError("Data must be a pandas DataFrame")
         if self.suggestions.empty:
-            raise ValueError("Suggestions DataFrame is empty")
+            raise PlotSenseDataError("Suggestions DataFrame is empty")
         if self.data.empty:
-            raise ValueError("DataFrame is empty")
+            raise PlotSenseDataError("DataFrame is empty")
 
         suggestion = self.suggestions.iloc[suggestion_index]
         plot_type = suggestion['plot_type'].lower()

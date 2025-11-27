@@ -11,6 +11,7 @@ import textwrap
 import builtins
 from pprint import pprint
 from groq import Groq
+from plotsense.exceptions import PlotSenseAPIError, PlotSenseDataError, PlotSenseConfigError
 
 
 load_dotenv()
@@ -88,16 +89,16 @@ class VisualizationRecommender:
                         self.api_keys[service] = builtins.input(
                             message).strip()
                         if not self.api_keys[service]:
-                            raise ValueError(
+                            raise PlotSenseDataError(
                                 f"{service.upper()} API key is required")
                     except (EOFError, OSError):
                         # Handle cases where input is not available
-                        raise ValueError(
+                        raise PlotSenseDataError(
                             f"{service.upper()} API key is required "
                             f"(get it at {service_links.get(service)})"
                         )
                 else:
-                    raise ValueError(
+                    raise PlotSenseDataError(
                         f"{service.upper()} API key is required. "
                         f"Set it in the environment or pass it as an argument. "
                         f"You can get it at {service_links.get(service)}"
@@ -110,8 +111,7 @@ class VisualizationRecommender:
             try:
                 self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
             except ImportError:
-                warnings.warn(
-                    "Groq Python client not installed. pip install groq")
+                raise PlotSenseConfigError("Python client not installed. Install with: pip install groq")
 
     def _detect_available_models(self):
         self.available_models = []
@@ -175,10 +175,10 @@ class VisualizationRecommender:
         self.n_to_request = max(n, 5)
 
         if self.df is None:
-            raise ValueError("No DataFrame set. Call set_dataframe() first.")
+            raise PlotSenseDataError("No DataFrame set. Call set_dataframe() first.")
 
         if not self.available_models:
-            raise ValueError("No available models detected")
+            raise PlotSenseDataError("No available models detected")
 
         if self.debug:
             print("\n[DEBUG] Starting recommendation process")
@@ -296,10 +296,10 @@ class VisualizationRecommender:
                         print(
                             f"\n[DEBUG] Got {len(result)} recommendations from {model}")
                 except Exception as e:
-                    warnings.warn(
-                        f"Failed to get recommendations from {model}: {str(e)}")
-                    if self.debug:
-                        print(f"\n[ERROR] Failed to process {model}: {str(e)}")
+                    # Surface API/client failures as configuration/API errors
+                    raise PlotSenseAPIError(
+                        f"Failed to get recommendations from {model}: {str(e)}"
+                    ) from e
 
         return all_recommendations
 
@@ -318,7 +318,7 @@ class VisualizationRecommender:
 
             return self._parse_recommendations(response, model)
         except Exception as e:
-            warnings.warn(f"Error processing model {model}: {str(e)}")
+            warnings.warn(f"Error processing models {model}: {str(e)}")
             if self.debug:
                 print(
                     f"\n[ERROR] Failed to parse response from {model}: {str(e)}")
@@ -547,7 +547,7 @@ class VisualizationRecommender:
 
     def _query_llm(self, prompt: str, model: str) -> str:
         if not self.clients.get('groq'):
-            raise ValueError("Groq client not initialized")
+            raise PlotSenseDataError("Groq client not initialized")
 
         try:
             response = self.clients['groq'].chat.completions.create(
@@ -559,7 +559,7 @@ class VisualizationRecommender:
             )
             return response.choices[0].message.content
         except Exception as e:
-            raise RuntimeError(f"Groq API query failed for {model}: {str(e)}")
+            raise PlotSenseAPIError(f"Groq API query failed for {model}: {str(e)}")
 
     def _validate_variable_order(
             self, recommendations: pd.DataFrame) -> pd.DataFrame:
