@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from groq import Groq
 import warnings
 import builtins
+from plotsense.exceptions import PlotSenseAPIError, PlotSenseDataError, PlotSenseConfigError
 
 
 load_dotenv()
@@ -69,12 +70,12 @@ class PlotExplainer:
                         )
                         self.api_keys[service] = builtins.input(message).strip()
                         if not self.api_keys[service]:
-                            raise ValueError(f"{service.upper()} API key is required")
+                            raise PlotSenseDataError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
                         # Handle cases where input is not available
-                        raise ValueError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
+                        raise PlotSenseConfigError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
                 else:
-                    raise ValueError(
+                    raise PlotSenseConfigError(
                         f"{service.upper()} API key is required. "
                         f"Set it in the environment or pass it as an argument. "
                         f"You can get it at {service_links.get(service)}"
@@ -88,6 +89,7 @@ class PlotExplainer:
                 self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
             except Exception as e:
                 warnings.warn(f"Could not initialize Groq client: {e}", ImportWarning)
+                raise PlotSenseAPIError(f"Groq client initialization error: {e}")
 
     def _detect_available_models(self):
         """Detect available models based on initialized clients"""
@@ -187,7 +189,7 @@ class PlotExplainer:
     ) -> str:
         """Generate and iteratively refine an explanation of a matplotlib/seaborn plot"""
         if not self.available_models:
-            raise ValueError("No available models detected")
+            raise PlotSenseDataError("No available models detected")
 
         # Save plot to temporary image file
         image_path = self.save_plot_to_image(plot_object, temp_image_path)
