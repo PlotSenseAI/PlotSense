@@ -3,7 +3,10 @@ import os
 import matplotlib.pyplot as plt
 from typing import Union, Optional, Dict, List
 from dotenv import load_dotenv
-from groq import Groq
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
 import warnings
 import builtins
 
@@ -59,6 +62,8 @@ class PlotExplainer:
         }
         
         for service in ['groq']:
+            if service == 'groq' and Groq is None:
+                continue
             if not self.api_keys.get(service):
                 if self.interactive:
                     try:
@@ -84,6 +89,8 @@ class PlotExplainer:
         self.clients = {}
         if self.api_keys.get('groq'):
             try:
+                if Groq is None:
+                    raise ImportError("groq")
                 self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
             except Exception as e:
                 warnings.warn(f"Could not initialize Groq client: {e}", ImportWarning)

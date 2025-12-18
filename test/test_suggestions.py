@@ -12,6 +12,7 @@ import warnings
 
 # SUT
 from plotsense.visual_suggestion.suggestions import VisualizationRecommender
+import plotsense.visual_suggestion.suggestions as suggestions_module
 
 load_dotenv()  # make .env vars visible for tests
 SEED = 42
@@ -74,8 +75,11 @@ class TestInitialization:
 
     def test_missing_key_noninteractive(self):
         """Test initialization with missing API key in non-interactive mode"""
-        with pytest.raises(ValueError, match="GROQ API key is required"):
+        if suggestions_module.Groq is None:
             VisualizationRecommender(api_keys={"groq": None}, interactive=False)
+        else:
+            with pytest.raises(ValueError, match="GROQ API key is required"):
+                VisualizationRecommender(api_keys={"groq": None}, interactive=False)
 
     def test_missing_key_interactive(self, monkeypatch):
         """Test interactive key input"""
