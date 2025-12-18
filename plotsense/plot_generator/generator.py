@@ -21,12 +21,13 @@ class PlotGenerator:
             raise TypeError("Data must be a pandas DataFrame")
         if data.empty:
             raise ValueError("DataFrame is empty")
-        if not isinstance(suggestions, pd.DataFrame):
-            raise TypeError("Suggestions must be a pandas DataFrame")
-        if suggestions.empty:
-            raise ValueError("Suggestions DataFrame is empty")
-        if 'plot_type' not in suggestions.columns or 'variables' not in suggestions.columns:
-            raise ValueError("Suggestions DataFrame must contain 'plot_type' and 'variables' columns")
+        if suggestions is not None:
+            if not isinstance(suggestions, pd.DataFrame):
+                raise TypeError("Suggestions must be a pandas DataFrame")
+            if suggestions.empty:
+                raise ValueError("Suggestions DataFrame is empty")
+            if 'plot_type' not in suggestions.columns or 'variables' not in suggestions.columns:
+                raise ValueError("Suggestions DataFrame must contain 'plot_type' and 'variables' columns")
         
         self.data = data.copy()
         self.suggestions = suggestions
@@ -49,6 +50,8 @@ class PlotGenerator:
             raise TypeError("Suggestion index must be an integer")
         if not isinstance(kwargs, dict):
             raise TypeError("Additional arguments must be provided as a dictionary")
+        if self.suggestions is None:
+            raise ValueError("No suggestions available to generate a plot")
         if self.suggestions.empty:
             raise ValueError("No suggestions available to generate a plot")
         if self.data.empty:

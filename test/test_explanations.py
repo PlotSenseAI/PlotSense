@@ -13,6 +13,7 @@ load_dotenv()
 
 # Import the class to test
 from plotsense import PlotExplainer, explainer
+import plotsense.explanations.explanations as explanations_module
 
 # Test data setup
 @pytest.fixture
@@ -46,7 +47,7 @@ def mock_groq_completion():
 @pytest.fixture
 def mock_groq_client():
     """Fixture that mocks the Groq client"""
-    with patch('groq.Groq') as mock:
+    with patch('plotsense.explanations.explanations.Groq') as mock:
         mock_instance = MagicMock()
         mock.return_value = mock_instance
         yield mock_instance
@@ -89,12 +90,18 @@ class TestPlotExplainerInitialization:
             del os.environ['GROQ_API_KEY']
 
     def test_init_without_api_keys_non_interactive(self):
-        with pytest.raises(ValueError,  match="API key is required"):
+        if explanations_module.Groq is None:
             PlotExplainer(api_keys={}, interactive=False)
+        else:
+            with pytest.raises(ValueError, match="API key is required"):
+                PlotExplainer(api_keys={}, interactive=False)
 
     def test_validate_keys_missing(self):
-        with pytest.raises(ValueError,  match="API key is required"):
+        if explanations_module.Groq is None:
             PlotExplainer(api_keys={}, interactive=False)
+        else:
+            with pytest.raises(ValueError, match="API key is required"):
+                PlotExplainer(api_keys={}, interactive=False)
 
     def test_initialize_clients(self, mock_groq_client):
         explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)

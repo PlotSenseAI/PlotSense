@@ -72,6 +72,13 @@ def reset_plot_generator_instance():
 
 # Unit Tests
 class TestPlotGeneratorUnit:
+    def test_init_plot_generator_without_suggestions(self, sample_dataframe):
+        pg = PlotGenerator(sample_dataframe, suggestions=None)
+        assert pg.data.equals(sample_dataframe)
+        assert pg.suggestions is None
+        with pytest.raises(ValueError, match="No suggestions available"):
+            pg.generate_plot(0)
+
     def test_init_plot_generator(self, sample_dataframe, sample_suggestions):
         pg = PlotGenerator(sample_dataframe, sample_suggestions)
         assert pg.data.equals(sample_dataframe)
