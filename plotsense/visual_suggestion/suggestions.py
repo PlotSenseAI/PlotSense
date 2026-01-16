@@ -75,7 +75,7 @@ class VisualizationRecommender:
     def _validate_keys(self):
         """Validate that required API keys are present"""
         service_links = {
-            'groq': 'https://console.groq.com/keys '
+            'groq': 'https://console.groq.com/keys'
         }
 
         for service in ['groq']:
