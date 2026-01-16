@@ -21,6 +21,8 @@ Be respectful and inclusive. We're all here to learn and build something great t
 
 ## Getting Started
 
+> **💡 Tip**: We recommend using [uv](https://docs.astral.sh/uv/) for dependency management. It's 10-100x faster than pip and provides better dependency resolution. All commands below show both uv and pip options.
+
 ### 1. Fork and Clone
 
 ```bash
@@ -32,6 +34,28 @@ cd PlotSenseAI
 ### 2. Set Up Development Environment
 
 **Python Backend:**
+
+**Using uv (Recommended - 10-100x faster):**
+
+```bash
+# Install uv if not already installed
+# Visit https://docs.astral.sh/uv/getting-started/installation/
+# Or run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Sync all dependencies including dev extras
+uv sync --all-extras
+
+# Activate the virtual environment
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# Install pre-commit hooks
+uv run pre-commit install
+```
+
+**Using pip (Traditional):**
 
 ```bash
 # Create virtual environment
@@ -46,6 +70,9 @@ source venv/bin/activate
 # Install in editable mode with dev dependencies
 pip install -e .
 pip install pytest pytest-cov pytest-mock flake8 autopep8 pre-commit bandit
+
+# Install pre-commit hooks
+pre-commit install
 ```
 
 **Frontend (Optional):**
@@ -55,16 +82,7 @@ cd web
 npm install
 ```
 
-### 3. Install Pre-commit Hooks
-
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-This will automatically run linting and formatting checks before each commit.
-
-### 4. Set Up API Keys
+### 3. Set Up API Keys
 
 ```bash
 # Create a .env file
@@ -185,6 +203,28 @@ export function Component({ title, onAction }: Props) {
 
 #### Running Tests
 
+**Using uv:**
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=plotsense --cov-report=html
+
+# Run specific test file
+uv run pytest test/test_plotgen.py
+
+# Run specific test
+uv run pytest test/test_plotgen.py::TestPlotFunctions::test_create_scatter
+
+# Run by marker
+uv run pytest -m unit            # Unit tests only
+uv run pytest -m "not slow"      # Skip slow tests
+```
+
+**Using pip/pytest directly:**
+
 ```bash
 # Run all tests
 pytest
@@ -285,6 +325,30 @@ describe('YourComponent', () => {
 ### Pre-commit Checks
 
 Before committing, ensure:
+
+**Using uv:**
+
+```bash
+# Pre-commit hooks pass
+uv run pre-commit run --all-files
+
+# Python linting
+uv run flake8 plotsense
+
+# Python security
+uv run bandit -r plotsense
+
+# Tests pass
+uv run pytest -v
+
+# Frontend (if applicable)
+cd web
+npm run lint
+npx tsc --noEmit
+npm test
+```
+
+**Using pip:**
 
 ```bash
 # Pre-commit hooks pass
@@ -429,10 +493,22 @@ Use the question template for:
 
 ### Running Specific Tests During Development
 
-```bash
-# Watch mode - reruns on file changes
-pytest --watch
+**Using uv:**
 
+```bash
+# Stop on first failure
+uv run pytest -x
+
+# Show print statements
+uv run pytest -s
+
+# Verbose output
+uv run pytest -vv
+```
+
+**Using pip:**
+
+```bash
 # Stop on first failure
 pytest -x
 
@@ -445,6 +521,18 @@ pytest -vv
 
 ### Debugging Tests
 
+**Using uv:**
+
+```bash
+# Drop into debugger on failure
+uv run pytest --pdb
+
+# Show local variables
+uv run pytest -l
+```
+
+**Using pip:**
+
 ```bash
 # Drop into debugger on failure
 pytest --pdb
@@ -454,6 +542,19 @@ pytest -l
 ```
 
 ### Code Coverage
+
+**Using uv:**
+
+```bash
+# Generate HTML coverage report
+uv run pytest --cov=plotsense --cov-report=html
+# Open htmlcov/index.html in browser
+
+# Show missing lines
+uv run pytest --cov=plotsense --cov-report=term-missing
+```
+
+**Using pip:**
 
 ```bash
 # Generate HTML coverage report
@@ -465,6 +566,18 @@ pytest --cov=plotsense --cov-report=term-missing
 ```
 
 ### Linting Auto-fix
+
+**Using uv:**
+
+```bash
+# Auto-fix Python formatting issues
+uv run autopep8 --in-place --recursive plotsense/
+
+# Auto-fix frontend issues
+cd web && npm run lint -- --fix
+```
+
+**Using pip:**
 
 ```bash
 # Auto-fix Python formatting issues

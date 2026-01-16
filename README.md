@@ -24,8 +24,14 @@ Let AI supercharge your EDA (Exploratory Data Analysis).
 
 ### 🔧 Install the package
 
+Using pip:
 ```bash
 pip install plotsense
+```
+
+Using uv (recommended for faster installation):
+```bash
+uv pip install plotsense
 ```
 
 ### 🧠 Import PlotSense:
@@ -185,6 +191,28 @@ For detailed testing documentation, see [TESTING.md](TESTING.md).
 
 ### Setting Up Development Environment
 
+Using uv (recommended):
+```bash
+# Install uv if not already installed
+# Visit https://docs.astral.sh/uv/getting-started/installation/
+
+# Sync all dependencies including dev extras
+uv sync --all-extras
+
+# Activate the virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On Unix or macOS:
+source .venv/bin/activate
+
+# Install frontend dependencies
+cd web && npm install
+
+# Install pre-commit hooks (optional but recommended)
+uv run pre-commit install
+```
+
+Using pip (traditional):
 ```bash
 # Install Python dependencies
 pip install -e .
@@ -206,6 +234,16 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 1. **Fork and clone** the repository
 2. **Set up development environment:**
+
+   Using uv (recommended):
+   ```bash
+   # Install uv: https://docs.astral.sh/uv/getting-started/installation/
+   uv sync --all-extras
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   uv run pre-commit install
+   ```
+
+   Using pip:
    ```bash
    pip install -e .
    pip install pytest pytest-cov pytest-mock pre-commit
@@ -213,7 +251,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
    ```
 3. **Create a feature branch:** `git checkout -b feature/your-feature`
 4. **Make changes and add tests**
-5. **Run tests:** `pytest` and `cd web && npm test`
+5. **Run tests:** `uv run pytest` (or `pytest`) and `cd web && npm test`
 6. **Submit a Pull Request**
 
 ### Branching Strategy
@@ -238,8 +276,14 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - PlotSense customised notebook template
 
 ### 📥 Install or Update
+Using pip:
 ``` bash
 pip install --upgrade plotsense  # Get the latest features!
+```
+
+Using uv:
+``` bash
+uv pip install --upgrade plotsense  # Get the latest features faster!
 ```
 
 ## 👥 Maintainers

@@ -22,26 +22,28 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[test]"
-        pip install flake8
+        uv sync --extra test --extra dev
 
     - name: Lint with flake8
       run: |
         # Stop the build if there are Python syntax errors or undefined names
-        flake8 plotsense --count --select=E9,F63,F7,F82 --show-source --statistics
+        uv run flake8 plotsense --count --select=E9,F63,F7,F82 --show-source --statistics
         # Exit-zero treats all errors as warnings
-        flake8 plotsense --count --exit-zero --max-complexity=10 --max-line-length=150 --statistics
+        uv run flake8 plotsense --count --exit-zero --max-complexity=10 --max-line-length=150 --statistics
 
     - name: Run tests with coverage
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
       run: |
-        pytest test/ -v --cov=plotsense --cov-report=xml --cov-report=term-missing
+        uv run pytest test/ -v --cov=plotsense --cov-report=xml --cov-report=term-missing
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
@@ -63,16 +65,19 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        cache: 'pip'
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -e ".[test]"
+        uv sync --extra test
 
     - name: Run unit tests only (fast)
       run: |
-        pytest test/ -v -m "not slow" --tb=short
+        uv run pytest test/ -v -m "not slow" --tb=short
 
   lint:
     name: Code Quality
@@ -85,15 +90,19 @@ jobs:
       with:
         python-version: '3.11'
 
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
     - name: Install linting tools
       run: |
-        python -m pip install --upgrade pip
-        pip install flake8 autopep8
+        uv sync --extra dev
 
     - name: Check code formatting
       run: |
-        flake8 plotsense --count --max-line-length=150 --statistics
+        uv run flake8 plotsense --count --max-line-length=150 --statistics
 
     - name: Check test code quality
       run: |
-        flake8 test --count --max-line-length=150 --statistics --extend-ignore=F401,F811
+        uv run flake8 test --count --max-line-length=150 --statistics --extend-ignore=F401,F811
