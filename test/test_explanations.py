@@ -1,4 +1,5 @@
 from plotsense import PlotExplainer, explainer
+from plotsense.exceptions import PlotSenseConfigError
 import pytest
 import matplotlib.pyplot as plt
 import numpy as np
@@ -95,12 +96,26 @@ class TestPlotExplainerInitialization:
             del os.environ['GROQ_API_KEY']
 
     def test_init_without_api_keys_non_interactive(self):
-        with pytest.raises(ValueError,  match="API key is required"):
-            PlotExplainer(api_keys={}, interactive=False)
+        # Temporarily remove environment variable if it exists
+        old_key = os.environ.pop('GROQ_API_KEY', None)
+        try:
+            with pytest.raises(PlotSenseConfigError,  match="API key is required"):
+                PlotExplainer(api_keys={}, interactive=False)
+        finally:
+            # Restore environment variable if it existed
+            if old_key:
+                os.environ['GROQ_API_KEY'] = old_key
 
     def test_validate_keys_missing(self):
-        with pytest.raises(ValueError,  match="API key is required"):
-            PlotExplainer(api_keys={}, interactive=False)
+        # Temporarily remove environment variable if it exists
+        old_key = os.environ.pop('GROQ_API_KEY', None)
+        try:
+            with pytest.raises(PlotSenseConfigError,  match="API key is required"):
+                PlotExplainer(api_keys={}, interactive=False)
+        finally:
+            # Restore environment variable if it existed
+            if old_key:
+                os.environ['GROQ_API_KEY'] = old_key
 
     def test_initialize_clients(self, mock_groq_client):
         explainer = PlotExplainer(api_keys={'groq': 'test_key'}, interactive=False)
