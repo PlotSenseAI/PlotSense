@@ -267,6 +267,10 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - 🚀 **Submit PRs** → See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ### 📅 Roadmap
+
+📖 **[View our detailed Technical Roadmap](https://plotsenseai.gitbook.io/plotsense-technical-roadmap/)**
+
+Upcoming features:
 - More model integrations
 - Automated insight highlighting
 - Jupyter widget support
