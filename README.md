@@ -21,7 +21,14 @@
 Let AI supercharge your EDA (Exploratory Data Analysis).
 
 ## 📚 Documentation
+- 📖 **[Technical Roadmap](https://plotsenseai.gitbook.io/plotsense-technical-roadmap/)** - Future features and development plans
 - 🏗️ **[Architecture & Methodology](https://plotsenseai.gitbook.io/plotsense-technical-roadmap/plotsense-technical-documentation-v2)** - System design and technical implementation
+
+## 💬 Community
+
+Join our community to get help, share ideas, and connect with other PlotSense users:
+
+- 💭 **[Discord Server](https://discord.gg/CacGryW4HR)** - Chat with the community and get real-time support
 
 ## ⚡ Quickstart
 
