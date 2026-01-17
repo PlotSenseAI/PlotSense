@@ -1,34 +1,36 @@
 import base64
 import os
 import matplotlib.pyplot as plt
-from typing import Union, Optional, Dict, List
+from typing import Union, Optional, Dict
 from dotenv import load_dotenv
 from groq import Groq
 import warnings
 import builtins
+from plotsense.exceptions import PlotSenseAPIError, PlotSenseDataError, PlotSenseConfigError
 
 
 load_dotenv()
 
+
 class PlotExplainer:
     """
-    A class to generate and refine explanations for plots using LLMs."""    
+    A class to generate and refine explanations for plots using LLMs."""
     DEFAULT_MODELS = {
         'groq': ['meta-llama/llama-4-scout-17b-16e-instruct',
-                  'meta-llama/llama-4-maverick-17b-128e-instruct'],
+                 'meta-llama/llama-4-maverick-17b-128e-instruct'],
     }
-    
+
     def __init__(
-            self, 
-            api_keys: Optional[Dict[str, str]] = None, 
+            self,
+            api_keys: Optional[Dict[str, str]] = None,
             max_iterations: int = 3,
-            interactive: bool = True, 
+            interactive: bool = True,
             timeout: int = 30
     ):
         # Default to empty dict if None
         api_keys = api_keys or {}
 
-        ## Initialize API keys with environment variable or provided keys
+        # Initialize API keys with environment variable or provided keys
         self.api_keys = {
             'groq': os.getenv('GROQ_API_KEY')
         }
@@ -55,9 +57,9 @@ class PlotExplainer:
     def _validate_keys(self):
         """Validate that required API keys are present"""
         service_links = {
-            'groq': '👉 https://console.groq.com/keys 👈'
+            'groq': 'https://console.groq.com/keys'
         }
-        
+
         for service in ['groq']:
             if not self.api_keys.get(service):
                 if self.interactive:
@@ -68,12 +70,12 @@ class PlotExplainer:
                         )
                         self.api_keys[service] = builtins.input(message).strip()
                         if not self.api_keys[service]:
-                            raise ValueError(f"{service.upper()} API key is required")
+                            raise PlotSenseDataError(f"{service.upper()} API key is required")
                     except (EOFError, OSError):
                         # Handle cases where input is not available
-                        raise ValueError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
+                        raise PlotSenseConfigError(f"{service.upper()} API key is required (get it at {service_links.get(service)})")
                 else:
-                    raise ValueError(
+                    raise PlotSenseConfigError(
                         f"{service.upper()} API key is required. "
                         f"Set it in the environment or pass it as an argument. "
                         f"You can get it at {service_links.get(service)}"
@@ -87,6 +89,7 @@ class PlotExplainer:
                 self.clients['groq'] = Groq(api_key=self.api_keys['groq'])
             except Exception as e:
                 warnings.warn(f"Could not initialize Groq client: {e}", ImportWarning)
+                raise PlotSenseAPIError(f"Groq client initialization error: {e}")
 
     def _detect_available_models(self):
         """Detect available models based on initialized clients"""
@@ -96,8 +99,8 @@ class PlotExplainer:
                 self.available_models.extend(self.DEFAULT_MODELS[provider])
 
     def save_plot_to_image(
-            self, 
-            plot_object: Union[plt.Figure, plt.Axes], 
+            self,
+            plot_object: Union[plt.Figure, plt.Axes],
             output_path: str = "temp_plot.jpg"
     ):
         """Save plot to an image file"""
@@ -105,12 +108,12 @@ class PlotExplainer:
             fig = plot_object.figure
         else:
             fig = plot_object
-            
+
         fig.savefig(output_path, format='jpeg', dpi=100, bbox_inches='tight')
         return output_path
 
     def encode_image(
-            self, 
+            self,
             image_path: str
     ) -> str:
         """Encode image file to base64 string"""
@@ -121,34 +124,33 @@ class PlotExplainer:
             self,
             model: str,
             prompt: str,
-            image_path: str, 
+            image_path: str,
             custom_parameters: Optional[Dict] = None
     ) -> str:
-        
         """Generic model querying method with provider-specific logic"""
-        
+
         base64_image = self.encode_image(image_path)
 
-         # Determine provider based on model name
+        # Determine provider based on model name
         provider = next(
-            (p for p, models in self.DEFAULT_MODELS.items() if model in models), 
+            (p for p, models in self.DEFAULT_MODELS.items() if model in models),
             None
         )
-        
+
         if not provider:
             raise ValueError(f"No provider found for model {model}")
-        
+
         try:
             if provider == 'groq':
                 client = self.clients['groq']
-                
+
                 # Merge default and custom parameters
                 default_params = {
                     'max_tokens': 1000,
                     'temperature': 0.7
                 }
                 generation_params = {**default_params, **(custom_parameters or {})}
-                
+
                 response = client.chat.completions.create(
                     model=model,
                     messages=[
@@ -167,9 +169,9 @@ class PlotExplainer:
                     ],
                     **generation_params
                 )
-                
+
                 return response.choices[0].message.content
-            
+
         except Exception as e:
             if "503" in str(e):
                 print(f"Groq service temporarily unavailable, retrying... Error: {e}")
@@ -187,18 +189,18 @@ class PlotExplainer:
     ) -> str:
         """Generate and iteratively refine an explanation of a matplotlib/seaborn plot"""
         if not self.available_models:
-            raise ValueError("No available models detected")
+            raise PlotSenseDataError("No available models detected")
 
         # Save plot to temporary image file
         image_path = self.save_plot_to_image(plot_object, temp_image_path)
-        
+
         try:
             # Iterative refinement process
             current_explanation = None
-            
+
             for iteration in range(self.max_iterations):
                 current_model = self.available_models[iteration % len(self.available_models)]
-                
+
                 if current_explanation is None:
                     current_explanation = self._generate_initial_explanation(
                         current_model, image_path, prompt, custom_parameters
@@ -207,23 +209,23 @@ class PlotExplainer:
                     critique = self._generate_critique(
                         image_path, current_explanation, prompt, current_model, custom_parameters
                     )
-                    
+
                     current_explanation = self._generate_refinement(
                         image_path, current_explanation, critique, prompt, current_model, custom_parameters
                     )
 
             return current_explanation
-            
+
         finally:
             # Clean up temporary image file
             if os.path.exists(image_path):
                 os.remove(image_path)
 
     def _generate_initial_explanation(
-        self, 
-        model: str, 
+        self,
+        model: str,
         image_path: str,
-        original_prompt: str, 
+        original_prompt: str,
         custom_parameters: Optional[Dict] = None
     ) -> str:
         """Generate initial plot explanation with structured format"""
@@ -237,7 +239,7 @@ class PlotExplainer:
         4. Conclusion
         - Be specific and data-driven
         - Highlight key statistical and visual elements
-        
+
         Specific Prompt: {original_prompt}
 
         Formatting Instructions:
@@ -246,19 +248,19 @@ class PlotExplainer:
         - Provide quantitative insights
         - Explain the significance of visual elements
         """
-        
+
         return self._query_model(
-            model=model, 
+            model=model,
             prompt=base_prompt,
-            image_path=image_path, 
+            image_path=image_path,
             custom_parameters=custom_parameters
         )
 
     def _generate_critique(
-        self, 
-        image_path: str, 
-        current_explanation: str, 
-        original_prompt: str, 
+        self,
+        image_path: str,
+        current_explanation: str,
+        original_prompt: str,
         model: str,
         custom_parameters: Optional[Dict] = None
     ) -> str:
@@ -293,20 +295,20 @@ class PlotExplainer:
 
         Provide a constructive critique that will help refine the explanation.
         """
-        
+
         return self._query_model(
-            model=model, 
-            prompt=critique_prompt, 
-            image_path=image_path, 
+            model=model,
+            prompt=critique_prompt,
+            image_path=image_path,
             custom_parameters=custom_parameters
         )
 
     def _generate_refinement(
-        self, 
+        self,
         image_path: str,
-        current_explanation: str, 
-        critique: str, 
-        original_prompt: str, 
+        current_explanation: str,
+        critique: str,
+        original_prompt: str,
         model: str,
         custom_parameters: Optional[Dict] = None
     ) -> str:
@@ -342,19 +344,21 @@ class PlotExplainer:
         - Use markdown-style headers for clarity
         - Include bullet points for clarity
         - Provide quantitative insights
-        - Ensure the explanation is comprehensive and insightful    
+        - Ensure the explanation is comprehensive and insightful
 
         """
-        
+
         return self._query_model(
             model=model,
-            prompt= refinement_prompt, 
+            prompt=refinement_prompt,
             image_path=image_path,
-            custom_parameters= custom_parameters
+            custom_parameters=custom_parameters
         )
+
 
 # Package-level convenience function
 _explainer_instance = None
+
 
 def explainer(
     plot_object: Union[plt.Figure, plt.Axes],
@@ -366,7 +370,7 @@ def explainer(
 ) -> str:
     """
     Convenience function for iterative plot explanation
-    
+
     Args:
         data: Original data used to create the plot (DataFrame or numpy array)
         plot_object: Matplotlib Figure or Axes
@@ -374,14 +378,14 @@ def explainer(
         api_keys: API keys for different providers
         max_iterations: Maximum refinement iterations
         custom_parameters: Additional generation parameters
-    
+
     Returns:
         Comprehensive explanation with refinement details
     """
 
     global _explainer_instance
     if _explainer_instance is None:
-        _explainer_instance = PlotExplainer(api_keys=api_keys, 
+        _explainer_instance = PlotExplainer(api_keys=api_keys,
                                             max_iterations=max_iterations)
     return _explainer_instance.refine_plot_explanation(
         plot_object=plot_object,
