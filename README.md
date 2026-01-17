@@ -20,6 +20,9 @@
 
 Let AI supercharge your EDA (Exploratory Data Analysis).
 
+## 📚 Documentation
+- 🏗️ **[Architecture & Methodology](https://plotsenseai.gitbook.io/plotsense-technical-roadmap/plotsense-technical-documentation-v2)** - System design and technical implementation
+
 ## ⚡ Quickstart
 
 ### 🔧 Install the package
